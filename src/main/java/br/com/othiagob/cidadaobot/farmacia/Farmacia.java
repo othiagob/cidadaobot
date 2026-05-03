@@ -26,7 +26,7 @@ public class Farmacia {
   @Column(nullable = false, length = 20)
   private String telefone;
 
-  @Column(name = "Criada_em", nullable = false, insertable = false, updatable = false)
+  @Column(name = "criada_em", nullable = false, insertable = false, updatable = false)
   private LocalDateTime criadaEm;
 
   protected Farmacia() {}
