@@ -1,0 +1,10 @@
+
+CREATE TABLE farmacias(
+    id BIGSERIAL PRIMARY KEY,
+    nome VARCHAR(120) NOT NULL,
+    endereco VARCHAR(180) NOT NULL,
+    bairro VARCHAR(100) NOT NULL,
+    distrito VARCHAR(100) NOT NULL,
+    telefone VARCHAR(20) NOT NULL,
+    criada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
