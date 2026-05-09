@@ -104,7 +104,7 @@ class EscalaPlantaoRepositoryTest {
     escalaPlantaoRepository.save(escalaSegundoDistrito);
 
     List<EscalaPlantao> resultado =
-        escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistrito(
+        escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
             LocalDate.of(2026, 5, 10), "Primeiro Distrito");
 
     assertThat(resultado).hasSize(1);
@@ -153,7 +153,7 @@ class EscalaPlantaoRepositoryTest {
     escalaPlantaoRepository.save(escalaPlantao);
 
     List<EscalaPlantao> resultado =
-        escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistrito(
+        escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
             LocalDate.of(2026, 5, 10), "Segundo Distrito");
 
     assertThat(resultado).isEmpty();
