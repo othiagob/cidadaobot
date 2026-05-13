@@ -17,25 +17,28 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class EscalaPlantaoRepositoryTest {
 
-  @Autowired private EscalaPlantaoRepository escalaPlantaoRepository;
+  @Autowired
+  private EscalaPlantaoRepository escalaPlantaoRepository;
 
-  @Autowired private FarmaciaRepository farmaciaRepository;
+  @Autowired
+  private FarmaciaRepository farmaciaRepository;
 
   @Test
   @DisplayName("Deve salvar escala de plantão relacionada a uma farmácia")
   void deveSalvarEscalaPlantaoComFarmacia() {
-    Farmacia farmacia =
-        criarFarmacia(
-            "Farmácia Central",
-            "Av. Brasil, 100",
-            "Centro",
-            "Primeiro Distrito",
-            "(69) 99999-9999");
+    Farmacia farmacia = criarFarmacia(
+        "Farmácia Central",
+        "Av. Brasil, 100",
+        "Centro",
+        "Primeiro Distrito",
+        "(69) 99999-9999"
+    );
 
-    EscalaPlantao escalaPlantao = new EscalaPlantao();
-    escalaPlantao.setFarmacia(farmacia);
-    escalaPlantao.setDataPlantao(LocalDate.of(2026, 5, 10));
-    escalaPlantao.setObservacoes("Plantão de teste");
+    EscalaPlantao escalaPlantao = criarEscalaPlantao(
+        farmacia,
+        LocalDate.of(2026, 5, 10),
+        "Plantão de teste"
+    );
 
     EscalaPlantao escalaSalva = escalaPlantaoRepository.save(escalaPlantao);
 
@@ -51,17 +54,19 @@ class EscalaPlantaoRepositoryTest {
   @Test
   @DisplayName("Deve buscar escalas por data do plantão")
   void deveBuscarEscalasPorDataPlantao() {
-    Farmacia farmacia =
-        criarFarmacia(
-            "Farmácia Central",
-            "Av. Brasil, 100",
-            "Centro",
-            "Primeiro Distrito",
-            "(69) 99999-9999");
+    Farmacia farmacia = criarFarmacia(
+        "Farmácia Central",
+        "Av. Brasil, 100",
+        "Centro",
+        "Primeiro Distrito",
+        "(69) 99999-9999"
+    );
 
-    EscalaPlantao escalaPlantao = new EscalaPlantao();
-    escalaPlantao.setFarmacia(farmacia);
-    escalaPlantao.setDataPlantao(LocalDate.of(2026, 5, 10));
+    EscalaPlantao escalaPlantao = criarEscalaPlantao(
+        farmacia,
+        LocalDate.of(2026, 5, 10),
+        null
+    );
 
     escalaPlantaoRepository.save(escalaPlantao);
 
@@ -76,36 +81,42 @@ class EscalaPlantaoRepositoryTest {
   @Test
   @DisplayName("Deve buscar escalas por data e distrito da farmácia")
   void deveBuscarEscalasPorDataEDistrito() {
-    Farmacia farmaciaPrimeiroDistrito =
-        criarFarmacia(
-            "Farmácia Central",
-            "Av. Brasil, 100",
-            "Centro",
-            "Primeiro Distrito",
-            "(69) 99999-9999");
+    Farmacia farmaciaPrimeiroDistrito = criarFarmacia(
+        "Farmácia Central",
+        "Av. Brasil, 100",
+        "Centro",
+        "Primeiro Distrito",
+        "(69) 99999-9999"
+    );
 
-    Farmacia farmaciaSegundoDistrito =
-        criarFarmacia(
-            "Farmácia Norte",
-            "Rua Amazonas, 200",
-            "Nova Brasília",
-            "Segundo Distrito",
-            "(69) 98888-8888");
+    Farmacia farmaciaSegundoDistrito = criarFarmacia(
+        "Farmácia Norte",
+        "Rua Amazonas, 200",
+        "Nova Brasília",
+        "Segundo Distrito",
+        "(69) 98888-8888"
+    );
 
-    EscalaPlantao escalaPrimeiroDistrito = new EscalaPlantao();
-    escalaPrimeiroDistrito.setFarmacia(farmaciaPrimeiroDistrito);
-    escalaPrimeiroDistrito.setDataPlantao(LocalDate.of(2026, 5, 10));
+    EscalaPlantao escalaPrimeiroDistrito = criarEscalaPlantao(
+        farmaciaPrimeiroDistrito,
+        LocalDate.of(2026, 5, 10),
+        null
+    );
 
-    EscalaPlantao escalaSegundoDistrito = new EscalaPlantao();
-    escalaSegundoDistrito.setFarmacia(farmaciaSegundoDistrito);
-    escalaSegundoDistrito.setDataPlantao(LocalDate.of(2026, 5, 10));
+    EscalaPlantao escalaSegundoDistrito = criarEscalaPlantao(
+        farmaciaSegundoDistrito,
+        LocalDate.of(2026, 5, 10),
+        null
+    );
 
     escalaPlantaoRepository.save(escalaPrimeiroDistrito);
     escalaPlantaoRepository.save(escalaSegundoDistrito);
 
     List<EscalaPlantao> resultado =
         escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
-            LocalDate.of(2026, 5, 10), "Primeiro Distrito");
+            LocalDate.of(2026, 5, 10),
+            "Primeiro Distrito"
+        );
 
     assertThat(resultado).hasSize(1);
     assertThat(resultado.get(0).getFarmacia().getNome()).isEqualTo("Farmácia Central");
@@ -115,17 +126,19 @@ class EscalaPlantaoRepositoryTest {
   @Test
   @DisplayName("Não deve retornar escala quando não existir plantão para a data informada")
   void naoDeveRetornarEscalaQuandoDataNaoExistir() {
-    Farmacia farmacia =
-        criarFarmacia(
-            "Farmácia Central",
-            "Av. Brasil, 100",
-            "Centro",
-            "Primeiro Distrito",
-            "(69) 99999-9999");
+    Farmacia farmacia = criarFarmacia(
+        "Farmácia Central",
+        "Av. Brasil, 100",
+        "Centro",
+        "Primeiro Distrito",
+        "(69) 99999-9999"
+    );
 
-    EscalaPlantao escalaPlantao = new EscalaPlantao();
-    escalaPlantao.setFarmacia(farmacia);
-    escalaPlantao.setDataPlantao(LocalDate.of(2026, 5, 10));
+    EscalaPlantao escalaPlantao = criarEscalaPlantao(
+        farmacia,
+        LocalDate.of(2026, 5, 10),
+        null
+    );
 
     escalaPlantaoRepository.save(escalaPlantao);
 
@@ -138,31 +151,53 @@ class EscalaPlantaoRepositoryTest {
   @Test
   @DisplayName("Não deve retornar escala quando distrito não corresponder")
   void naoDeveRetornarEscalaQuandoDistritoNaoCorresponder() {
-    Farmacia farmacia =
-        criarFarmacia(
-            "Farmácia Central",
-            "Av. Brasil, 100",
-            "Centro",
-            "Primeiro Distrito",
-            "(69) 99999-9999");
+    Farmacia farmacia = criarFarmacia(
+        "Farmácia Central",
+        "Av. Brasil, 100",
+        "Centro",
+        "Primeiro Distrito",
+        "(69) 99999-9999"
+    );
 
-    EscalaPlantao escalaPlantao = new EscalaPlantao();
-    escalaPlantao.setFarmacia(farmacia);
-    escalaPlantao.setDataPlantao(LocalDate.of(2026, 5, 10));
+    EscalaPlantao escalaPlantao = criarEscalaPlantao(
+        farmacia,
+        LocalDate.of(2026, 5, 10),
+        null
+    );
 
     escalaPlantaoRepository.save(escalaPlantao);
 
     List<EscalaPlantao> resultado =
         escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
-            LocalDate.of(2026, 5, 10), "Segundo Distrito");
+            LocalDate.of(2026, 5, 10),
+            "Segundo Distrito"
+        );
 
     assertThat(resultado).isEmpty();
   }
 
   private Farmacia criarFarmacia(
-      String nome, String endereco, String bairro, String distrito, String telefone) {
+      String nome,
+      String endereco,
+      String bairro,
+      String distrito,
+      String telefone
+  ) {
     Farmacia farmacia = new Farmacia(nome, endereco, bairro, distrito, telefone);
-
     return farmaciaRepository.save(farmacia);
+  }
+
+  private EscalaPlantao criarEscalaPlantao(
+      Farmacia farmacia,
+      LocalDate dataPlantao,
+      String observacoes
+  ) {
+    return new EscalaPlantao(
+        farmacia,
+        dataPlantao,
+        LocalTime.of(19, 0),
+        LocalTime.of(7, 0),
+        observacoes
+    );
   }
 }

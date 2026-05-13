@@ -29,10 +29,10 @@ public class EscalaPlantao {
   private LocalDate dataPlantao;
 
   @Column(name = "inicia_as", nullable = false)
-  private LocalTime iniciaAs = LocalTime.of(19, 0);
+  private LocalTime iniciaAs;
 
   @Column(name = "termina_as", nullable = false)
-  private LocalTime terminaAs = LocalTime.of(7, 0);
+  private LocalTime terminaAs;
 
   @Column(name = "observacoes")
   private String observacoes;
@@ -40,7 +40,22 @@ public class EscalaPlantao {
   @Column(name = "criado_em", nullable = false, insertable = false, updatable = false)
   private LocalDateTime criadoEm;
 
-  protected EscalaPlantao() {}
+  protected EscalaPlantao() {
+  }
+
+  public EscalaPlantao(
+      Farmacia farmacia,
+      LocalDate dataPlantao,
+      LocalTime iniciaAs,
+      LocalTime terminaAs,
+      String observacoes
+  ) {
+    this.farmacia = farmacia;
+    this.dataPlantao = dataPlantao;
+    this.iniciaAs = iniciaAs;
+    this.terminaAs = terminaAs;
+    this.observacoes = observacoes;
+  }
 
   public Long getId() {
     return id;
@@ -50,40 +65,20 @@ public class EscalaPlantao {
     return farmacia;
   }
 
-  public void setFarmacia(Farmacia farmacia) {
-    this.farmacia = farmacia;
-  }
-
   public LocalDate getDataPlantao() {
     return dataPlantao;
-  }
-
-  public void setDataPlantao(LocalDate dataPlantao) {
-    this.dataPlantao = dataPlantao;
   }
 
   public LocalTime getIniciaAs() {
     return iniciaAs;
   }
 
-  public void setIniciaAs(LocalTime iniciaAs) {
-    this.iniciaAs = iniciaAs;
-  }
-
   public LocalTime getTerminaAs() {
     return terminaAs;
   }
 
-  public void setTerminaAs(LocalTime terminaAs) {
-    this.terminaAs = terminaAs;
-  }
-
   public String getObservacoes() {
     return observacoes;
-  }
-
-  public void setObservacoes(String observacoes) {
-    this.observacoes = observacoes;
   }
 
   public LocalDateTime getCriadoEm() {

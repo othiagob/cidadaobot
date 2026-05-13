@@ -23,9 +23,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PlantaoServiceTest {
 
-  @Mock private EscalaPlantaoRepository escalaPlantaoRepository;
+  @Mock
+  private EscalaPlantaoRepository escalaPlantaoRepository;
 
-  @InjectMocks private PlantaoService plantaoService;
+  @InjectMocks
+  private PlantaoService plantaoService;
 
   @Test
   @DisplayName("18:59 não deve ter plantão ativo")
@@ -103,7 +105,8 @@ class PlantaoServiceTest {
 
     EscalaPlantao escala = criarEscalaPlantao(dataPlantao, "Primeiro Distrito");
 
-    when(escalaPlantaoRepository.findByDataPlantao(dataPlantao)).thenReturn(List.of(escala));
+    when(escalaPlantaoRepository.findByDataPlantao(dataPlantao))
+        .thenReturn(List.of(escala));
 
     List<EscalaPlantao> resultado = plantaoService.buscarPlantoesAtivos(momento);
 
@@ -135,8 +138,9 @@ class PlantaoServiceTest {
     EscalaPlantao escala = criarEscalaPlantao(dataPlantao, distrito);
 
     when(escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
-            dataPlantao, distrito))
-        .thenReturn(List.of(escala));
+        dataPlantao,
+        distrito
+    )).thenReturn(List.of(escala));
 
     List<EscalaPlantao> resultado =
         plantaoService.buscarPlantoesAtivosPorDistrito(momento, distrito);
@@ -181,16 +185,20 @@ class PlantaoServiceTest {
   }
 
   private EscalaPlantao criarEscalaPlantao(LocalDate dataPlantao, String distrito) {
-    Farmacia farmacia =
-        new Farmacia("Farmácia Teste", "Rua Teste, 123", "Centro", distrito, "(69) 99999-9999");
+    Farmacia farmacia = new Farmacia(
+        "Farmácia Teste",
+        "Rua Teste, 123",
+        "Centro",
+        distrito,
+        "(69) 99999-9999"
+    );
 
-    EscalaPlantao escala = new EscalaPlantao();
-    escala.setFarmacia(farmacia);
-    escala.setDataPlantao(dataPlantao);
-    escala.setIniciaAs(LocalTime.of(19, 0));
-    escala.setTerminaAs(LocalTime.of(7, 0));
-    escala.setObservacoes("Plantão de teste");
-
-    return escala;
+    return new EscalaPlantao(
+        farmacia,
+        dataPlantao,
+        LocalTime.of(19, 0),
+        LocalTime.of(7, 0),
+        "Plantão de teste"
+    );
   }
 }
