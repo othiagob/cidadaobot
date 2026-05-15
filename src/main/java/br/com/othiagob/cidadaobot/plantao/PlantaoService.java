@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PlantaoService {
+
   private static final LocalTime HORARIO_INICIO_PLANTAO = LocalTime.of(19, 0);
   private static final LocalTime HORARIO_FINAL_PLANTAO = LocalTime.of(7, 0);
 
@@ -35,6 +36,7 @@ public class PlantaoService {
     if (horarioAtual.isBefore(HORARIO_FINAL_PLANTAO)) {
       return Optional.of(dataAtual.minusDays(1));
     }
+
     return Optional.empty();
   }
 
@@ -50,6 +52,7 @@ public class PlantaoService {
 
   public List<EscalaPlantao> buscarPlantoesAtivosPorDistrito(
       LocalDateTime momento, String distrito) {
+
     if (distrito == null || distrito.isBlank()) {
       throw new IllegalArgumentException("O distrito não pode ser nulo ou vazio.");
     }
@@ -65,8 +68,13 @@ public class PlantaoService {
   }
 
   public ConsultaPlantaoAtualRespostaDTO consultarPlantaoAtual(String distrito) {
-    LocalDateTime agora = LocalDateTime.now();
-    Optional<LocalDate> dataReferencia = determinarDataPlantaoAtivo(agora);
+    return consultarPlantaoAtual(distrito, LocalDateTime.now());
+  }
+
+  public ConsultaPlantaoAtualRespostaDTO consultarPlantaoAtual(
+      String distrito, LocalDateTime momento) {
+
+    Optional<LocalDate> dataReferencia = determinarDataPlantaoAtivo(momento);
 
     if (dataReferencia.isEmpty()) {
       return new ConsultaPlantaoAtualRespostaDTO(
@@ -75,10 +83,8 @@ public class PlantaoService {
           "Não há plantão ativo neste horário. O plantão funciona das 19:00 às 07:00.",
           List.of());
     }
-    List<EscalaPlantao> escalas =
-        distrito == null || distrito.isBlank()
-            ? buscarPlantoesAtivos(agora)
-            : buscarPlantoesAtivosPorDistrito(agora, distrito);
+
+    List<EscalaPlantao> escalas = buscarEscalasDoPlantao(momento, distrito);
 
     if (escalas.isEmpty()) {
       return new ConsultaPlantaoAtualRespostaDTO(
@@ -91,6 +97,15 @@ public class PlantaoService {
     List<PlantaoRespostaDTO> plantoes = escalas.stream().map(PlantaoRespostaDTO::from).toList();
 
     return new ConsultaPlantaoAtualRespostaDTO(
-        dataReferencia.get(), true, "Plantão ativo encontrado", plantoes);
+        dataReferencia.get(), true, "Plantão ativo encontrado.", plantoes);
+  }
+
+  private List<EscalaPlantao> buscarEscalasDoPlantao(LocalDateTime momento, String distrito) {
+
+    if (distrito == null || distrito.isBlank()) {
+      return buscarPlantoesAtivos(momento);
+    }
+
+    return buscarPlantoesAtivosPorDistrito(momento, distrito);
   }
 }

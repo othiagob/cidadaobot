@@ -1,7 +1,6 @@
 package br.com.othiagob.cidadaobot.plantao;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -121,15 +120,12 @@ class PlantaoControllerTest {
   @Test
   @DisplayName("Deve retornar erro 400 quando distrito for inválido")
   void deveRetornarErroQuandoDistritoForInvalido() throws Exception {
-    when(plantaoService.consultarPlantaoAtual(eq("   ")))
-        .thenThrow(new IllegalArgumentException("O distrito não pode ser nulo ou vazio."));
-
     mockMvc
         .perform(get("/api/plantoes/atual").param("distrito", "   "))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.status").value(400))
         .andExpect(jsonPath("$.erro").value("Requisição inválida"))
-        .andExpect(jsonPath("$.mensagem").value("O distrito não pode ser nulo ou vazio."))
+        .andExpect(jsonPath("$.mensagem").value("O distrito não pode ser vazio."))
         .andExpect(jsonPath("$.caminho").value("/api/plantoes/atual"));
   }
 
@@ -155,7 +151,7 @@ class PlantaoControllerTest {
         new ConsultaPlantaoAtualRespostaDTO(
             dataPlantao, true, "Plantão ativo encontrado.", List.of(plantao));
 
-    when(plantaoService.consultarPlantaoAtual(eq("Segundo Distrito"))).thenReturn(resposta);
+    when(plantaoService.consultarPlantaoAtual("Segundo Distrito")).thenReturn(resposta);
 
     mockMvc
         .perform(get("/api/plantoes/atual").param("distrito", "Segundo Distrito"))

@@ -1,7 +1,10 @@
 package br.com.othiagob.cidadaobot.erro;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,6 +23,26 @@ public class TratadorGlobalDeErros {
             HttpStatus.BAD_REQUEST.value(),
             "Requisição inválida",
             exception.getMessage(),
+            request.getRequestURI());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ErroRespostaDTO> tratarConstraintViolationException(
+      ConstraintViolationException exception, HttpServletRequest request) {
+
+    String mensagem =
+        exception.getConstraintViolations().stream()
+            .map(ConstraintViolation::getMessage)
+            .collect(Collectors.joining("; "));
+
+    ErroRespostaDTO resposta =
+        new ErroRespostaDTO(
+            LocalDateTime.now(),
+            HttpStatus.BAD_REQUEST.value(),
+            "Requisição inválida",
+            mensagem,
             request.getRequestURI());
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
