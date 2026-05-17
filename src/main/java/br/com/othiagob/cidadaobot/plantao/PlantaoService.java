@@ -54,6 +54,27 @@ public class PlantaoService {
         dataPlantaoAtivo, distrito.trim());
   }
 
+  public ConsultaPlantaoAtualRespostaDTO consultarPlantaoPorData(LocalDate data, String distrito) {
+
+    if (data == null) {
+      throw new IllegalArgumentException("A data da consulta não pode ser nula.");
+    }
+
+    List<EscalaPlantao> escalas = buscarEscalasPorData(data, distrito);
+
+    if (escalas.isEmpty()) {
+      return new ConsultaPlantaoAtualRespostaDTO(
+          data,
+          true,
+          "Não encontrei escala de plantão cadastrada para esta data no sistema.",
+          List.of());
+    }
+
+    List<PlantaoRespostaDTO> plantoes = escalas.stream().map(PlantaoRespostaDTO::from).toList();
+    return new ConsultaPlantaoAtualRespostaDTO(
+        data, true, "Plantão encontrado para a data informada.", plantoes);
+  }
+
   public ConsultaPlantaoAtualRespostaDTO consultarPlantaoAtual(String distrito) {
     return consultarPlantaoAtual(distrito, LocalDateTime.now());
   }
@@ -77,6 +98,15 @@ public class PlantaoService {
 
     return new ConsultaPlantaoAtualRespostaDTO(
         dataReferencia, true, "Plantão ativo encontrado.", plantoes);
+  }
+
+  private List<EscalaPlantao> buscarEscalasPorData(LocalDate data, String distrito) {
+    if (distrito == null || distrito.isBlank()) {
+      return escalaPlantaoRepository.findByDataPlantao(data);
+    }
+
+    return escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
+        data, distrito.trim());
   }
 
   private List<EscalaPlantao> buscarEscalasDoPlantao(LocalDateTime momento, String distrito) {

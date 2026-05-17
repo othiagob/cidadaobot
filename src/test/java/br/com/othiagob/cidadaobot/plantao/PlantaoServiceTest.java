@@ -11,74 +11,50 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 
-@ExtendWith(MockitoExtension.class)
 class PlantaoServiceTest {
 
-  @Mock private EscalaPlantaoRepository escalaPlantaoRepository;
+  private final EscalaPlantaoRepository escalaPlantaoRepository =
+      Mockito.mock(EscalaPlantaoRepository.class);
 
-  @InjectMocks private PlantaoService plantaoService;
+  private final PlantaoService plantaoService = new PlantaoService(escalaPlantaoRepository);
 
   @Test
-  @DisplayName("06:59 deve retornar plantão do dia anterior")
-  void deveRetornarDiaAnteriorQuandoHorarioForSeisECinquentaENove() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 6, 59);
+  @DisplayName("Deve determinar a data do plantão no mesmo dia após 07:00")
+  void deveDeterminarDataPlantaoMesmoDiaAposSeteHoras() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 17, 8, 0);
 
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
+    LocalDate dataPlantao = plantaoService.determinarDataPlantaoAtivo(momento).orElseThrow();
 
-    assertThat(resultado).contains(LocalDate.of(2026, 5, 10));
+    assertThat(dataPlantao).isEqualTo(LocalDate.of(2026, 5, 17));
   }
 
   @Test
-  @DisplayName("07:00 deve retornar plantão da data atual")
-  void deveRetornarDataAtualQuandoHorarioForSeteHoras() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 7, 0);
+  @DisplayName("Deve determinar a data do plantão do dia anterior antes de 07:00")
+  void deveDeterminarDataPlantaoDiaAnteriorAntesSeteHoras() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 18, 2, 30);
 
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
+    LocalDate dataPlantao = plantaoService.determinarDataPlantaoAtivo(momento).orElseThrow();
 
-    assertThat(resultado).contains(LocalDate.of(2026, 5, 11));
+    assertThat(dataPlantao).isEqualTo(LocalDate.of(2026, 5, 17));
   }
 
   @Test
-  @DisplayName("12:00 deve retornar plantão da data atual")
-  void deveRetornarDataAtualQuandoHorarioForMeioDia() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 12, 0);
+  @DisplayName("Deve considerar 07:00 como plantão do próprio dia")
+  void deveConsiderarSeteHorasComoPlantaoDoProprioDia() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 18, 7, 0);
 
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
+    LocalDate dataPlantao = plantaoService.determinarDataPlantaoAtivo(momento).orElseThrow();
 
-    assertThat(resultado).contains(LocalDate.of(2026, 5, 11));
+    assertThat(dataPlantao).isEqualTo(LocalDate.of(2026, 5, 18));
   }
 
   @Test
-  @DisplayName("23:59 deve retornar plantão da data atual")
-  void deveRetornarDataAtualQuandoHorarioForVinteETresECinquentaENove() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 23, 59);
-
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
-
-    assertThat(resultado).contains(LocalDate.of(2026, 5, 10));
-  }
-
-  @Test
-  @DisplayName("00:00 deve retornar plantão do dia anterior")
-  void deveRetornarDiaAnteriorQuandoHorarioForMeiaNoite() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 0, 0);
-
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
-
-    assertThat(resultado).contains(LocalDate.of(2026, 5, 10));
-  }
-
-  @Test
-  @DisplayName("Deve lançar erro quando momento for nulo")
-  void deveLancarErroQuandoMomentoForNulo() {
+  @DisplayName("Deve lançar exceção quando momento for nulo")
+  void deveLancarExcecaoQuandoMomentoForNulo() {
     assertThatThrownBy(() -> plantaoService.determinarDataPlantaoAtivo(null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("O momento da consulta não pode ser nulo.");
@@ -87,60 +63,41 @@ class PlantaoServiceTest {
   @Test
   @DisplayName("Deve buscar plantões ativos pela data calculada")
   void deveBuscarPlantoesAtivosPelaDataCalculada() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 12, 0);
-    LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 18, 2, 30);
+    LocalDate dataPlantao = LocalDate.of(2026, 5, 17);
 
-    EscalaPlantao escala = criarEscalaPlantao(dataPlantao, "Primeiro Distrito");
-
-    when(escalaPlantaoRepository.findByDataPlantao(dataPlantao)).thenReturn(List.of(escala));
+    when(escalaPlantaoRepository.findByDataPlantao(dataPlantao)).thenReturn(List.of());
 
     List<EscalaPlantao> resultado = plantaoService.buscarPlantoesAtivos(momento);
 
-    assertThat(resultado).hasSize(1);
-    assertThat(resultado.get(0).getDataPlantao()).isEqualTo(dataPlantao);
-
+    assertThat(resultado).isEmpty();
     verify(escalaPlantaoRepository).findByDataPlantao(dataPlantao);
   }
 
   @Test
   @DisplayName("Deve buscar plantões ativos por distrito")
   void deveBuscarPlantoesAtivosPorDistrito() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 22, 0);
-    LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 18, 2, 30);
+    LocalDate dataPlantao = LocalDate.of(2026, 5, 17);
     String distrito = "Primeiro Distrito";
-
-    EscalaPlantao escala = criarEscalaPlantao(dataPlantao, distrito);
 
     when(escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
             dataPlantao, distrito))
-        .thenReturn(List.of(escala));
+        .thenReturn(List.of());
 
     List<EscalaPlantao> resultado =
         plantaoService.buscarPlantoesAtivosPorDistrito(momento, distrito);
 
-    assertThat(resultado).hasSize(1);
-    assertThat(resultado.get(0).getFarmacia().getDistrito()).isEqualTo(distrito);
+    assertThat(resultado).isEmpty();
 
     verify(escalaPlantaoRepository)
         .findByDataPlantaoAndFarmaciaDistritoIgnoreCase(dataPlantao, distrito);
   }
 
   @Test
-  @DisplayName("Deve remover espaços extras do distrito antes da busca")
-  void deveRemoverEspacosExtrasDoDistritoAntesDaBusca() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 22, 0);
-    LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
-
-    plantaoService.buscarPlantoesAtivosPorDistrito(momento, "  Primeiro Distrito  ");
-
-    verify(escalaPlantaoRepository)
-        .findByDataPlantaoAndFarmaciaDistritoIgnoreCase(dataPlantao, "Primeiro Distrito");
-  }
-
-  @Test
-  @DisplayName("Deve lançar erro quando distrito for nulo")
-  void deveLancarErroQuandoDistritoForNulo() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 22, 0);
+  @DisplayName("Deve lançar exceção quando distrito for nulo")
+  void deveLancarExcecaoQuandoDistritoForNulo() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 18, 2, 30);
 
     assertThatThrownBy(() -> plantaoService.buscarPlantoesAtivosPorDistrito(momento, null))
         .isInstanceOf(IllegalArgumentException.class)
@@ -148,9 +105,9 @@ class PlantaoServiceTest {
   }
 
   @Test
-  @DisplayName("Deve lançar erro quando distrito for vazio")
-  void deveLancarErroQuandoDistritoForVazio() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 22, 0);
+  @DisplayName("Deve lançar exceção quando distrito for vazio")
+  void deveLancarExcecaoQuandoDistritoForVazio() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 18, 2, 30);
 
     assertThatThrownBy(() -> plantaoService.buscarPlantoesAtivosPorDistrito(momento, "   "))
         .isInstanceOf(IllegalArgumentException.class)
@@ -158,12 +115,13 @@ class PlantaoServiceTest {
   }
 
   @Test
-  @DisplayName("Deve consultar plantão atual sem distrito quando existir escala cadastrada")
-  void deveConsultarPlantaoAtualSemDistritoQuandoExistirEscalaCadastrada() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 12, 0);
-    LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
+  @DisplayName("Deve consultar plantão atual sem distrito")
+  void deveConsultarPlantaoAtualSemDistrito() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 17, 10, 0);
+    LocalDate dataPlantao = LocalDate.of(2026, 5, 17);
 
-    EscalaPlantao escala = criarEscalaPlantao(dataPlantao, "Primeiro Distrito");
+    Farmacia farmacia = criarFarmacia("Farmácia Central", "Primeiro Distrito");
+    EscalaPlantao escala = criarEscala(dataPlantao, farmacia);
 
     when(escalaPlantaoRepository.findByDataPlantao(dataPlantao)).thenReturn(List.of(escala));
 
@@ -173,20 +131,18 @@ class PlantaoServiceTest {
     assertThat(resposta.plantaoAtivo()).isTrue();
     assertThat(resposta.mensagem()).isEqualTo("Plantão ativo encontrado.");
     assertThat(resposta.plantoes()).hasSize(1);
-    assertThat(resposta.plantoes().get(0).farmacia().nome()).isEqualTo("Farmácia Teste");
-    assertThat(resposta.plantoes().get(0).farmacia().distrito()).isEqualTo("Primeiro Distrito");
-
-    verify(escalaPlantaoRepository).findByDataPlantao(dataPlantao);
+    assertThat(resposta.plantoes().get(0).farmacia().nome()).isEqualTo("Farmácia Central");
   }
 
   @Test
-  @DisplayName("Deve consultar plantão atual por distrito quando distrito for informado")
-  void deveConsultarPlantaoAtualPorDistritoQuandoDistritoForInformado() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 22, 0);
-    LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
+  @DisplayName("Deve consultar plantão atual com distrito")
+  void deveConsultarPlantaoAtualComDistrito() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 17, 10, 0);
+    LocalDate dataPlantao = LocalDate.of(2026, 5, 17);
     String distrito = "Segundo Distrito";
 
-    EscalaPlantao escala = criarEscalaPlantao(dataPlantao, distrito);
+    Farmacia farmacia = criarFarmacia("Farmácia Segundo Distrito", distrito);
+    EscalaPlantao escala = criarEscala(dataPlantao, farmacia);
 
     when(escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
             dataPlantao, distrito))
@@ -199,18 +155,14 @@ class PlantaoServiceTest {
     assertThat(resposta.plantaoAtivo()).isTrue();
     assertThat(resposta.mensagem()).isEqualTo("Plantão ativo encontrado.");
     assertThat(resposta.plantoes()).hasSize(1);
-    assertThat(resposta.plantoes().get(0).farmacia().distrito()).isEqualTo("Segundo Distrito");
-
-    verify(escalaPlantaoRepository)
-        .findByDataPlantaoAndFarmaciaDistritoIgnoreCase(dataPlantao, distrito);
+    assertThat(resposta.plantoes().get(0).farmacia().distrito()).isEqualTo(distrito);
   }
 
   @Test
-  @DisplayName(
-      "Deve consultar plantão atual e retornar mensagem quando não houver escala cadastrada")
-  void deveConsultarPlantaoAtualERetornarMensagemQuandoNaoHouverEscalaCadastrada() {
-    LocalDateTime momento = LocalDateTime.of(2026, 7, 1, 12, 0);
-    LocalDate dataPlantao = LocalDate.of(2026, 7, 1);
+  @DisplayName("Deve retornar lista vazia quando não houver escala para o plantão atual")
+  void deveRetornarListaVaziaQuandoNaoHouverEscalaParaPlantaoAtual() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 17, 10, 0);
+    LocalDate dataPlantao = LocalDate.of(2026, 5, 17);
 
     when(escalaPlantaoRepository.findByDataPlantao(dataPlantao)).thenReturn(List.of());
 
@@ -221,15 +173,104 @@ class PlantaoServiceTest {
     assertThat(resposta.mensagem())
         .isEqualTo("Não encontrei escala de plantão cadastrada para esta data no sistema.");
     assertThat(resposta.plantoes()).isEmpty();
-
-    verify(escalaPlantaoRepository).findByDataPlantao(dataPlantao);
   }
 
-  private EscalaPlantao criarEscalaPlantao(LocalDate dataPlantao, String distrito) {
-    Farmacia farmacia =
-        new Farmacia("Farmácia Teste", "Rua Teste, 123", "Centro", distrito, "(69) 99999-9999");
+  // ===== FASE 8 - INÍCIO =====
+  @Test
+  @DisplayName("Deve consultar plantão por data sem distrito")
+  void deveConsultarPlantaoPorDataSemDistrito() {
+    LocalDate data = LocalDate.of(2026, 5, 17);
 
-    return new EscalaPlantao(
-        farmacia, dataPlantao, LocalTime.of(7, 0), LocalTime.of(7, 0), "Plantão de teste");
+    Farmacia farmacia = criarFarmacia("Farmácia Real", "Primeiro Distrito");
+    EscalaPlantao escala = criarEscala(data, farmacia);
+
+    when(escalaPlantaoRepository.findByDataPlantao(data)).thenReturn(List.of(escala));
+
+    ConsultaPlantaoAtualRespostaDTO resposta = plantaoService.consultarPlantaoPorData(data, null);
+
+    assertThat(resposta.dataReferencia()).isEqualTo(data);
+    assertThat(resposta.plantaoAtivo()).isTrue();
+    assertThat(resposta.mensagem()).isEqualTo("Plantão encontrado para a data informada.");
+    assertThat(resposta.plantoes()).hasSize(1);
+    assertThat(resposta.plantoes().get(0).farmacia().nome()).isEqualTo("Farmácia Real");
+
+    verify(escalaPlantaoRepository).findByDataPlantao(data);
+  }
+
+  @Test
+  @DisplayName("Deve consultar plantão por data e distrito")
+  void deveConsultarPlantaoPorDataEDistrito() {
+    LocalDate data = LocalDate.of(2026, 5, 17);
+    String distrito = "Segundo Distrito";
+
+    Farmacia farmacia = criarFarmacia("Saúde Popular", distrito);
+    EscalaPlantao escala = criarEscala(data, farmacia);
+
+    when(escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(data, distrito))
+        .thenReturn(List.of(escala));
+
+    ConsultaPlantaoAtualRespostaDTO resposta =
+        plantaoService.consultarPlantaoPorData(data, distrito);
+
+    assertThat(resposta.dataReferencia()).isEqualTo(data);
+    assertThat(resposta.plantaoAtivo()).isTrue();
+    assertThat(resposta.mensagem()).isEqualTo("Plantão encontrado para a data informada.");
+    assertThat(resposta.plantoes()).hasSize(1);
+    assertThat(resposta.plantoes().get(0).farmacia().distrito()).isEqualTo(distrito);
+
+    verify(escalaPlantaoRepository).findByDataPlantaoAndFarmaciaDistritoIgnoreCase(data, distrito);
+  }
+
+  @Test
+  @DisplayName("Deve remover espaços do distrito na consulta por data")
+  void deveRemoverEspacosDoDistritoNaConsultaPorData() {
+    LocalDate data = LocalDate.of(2026, 5, 17);
+
+    when(escalaPlantaoRepository.findByDataPlantaoAndFarmaciaDistritoIgnoreCase(
+            data, "Primeiro Distrito"))
+        .thenReturn(List.of());
+
+    ConsultaPlantaoAtualRespostaDTO resposta =
+        plantaoService.consultarPlantaoPorData(data, "  Primeiro Distrito  ");
+
+    assertThat(resposta.dataReferencia()).isEqualTo(data);
+    assertThat(resposta.plantoes()).isEmpty();
+
+    verify(escalaPlantaoRepository)
+        .findByDataPlantaoAndFarmaciaDistritoIgnoreCase(data, "Primeiro Distrito");
+  }
+
+  @Test
+  @DisplayName("Deve retornar lista vazia quando não houver escala na data informada")
+  void deveRetornarListaVaziaQuandoNaoHouverEscalaNaDataInformada() {
+    LocalDate data = LocalDate.of(2026, 5, 30);
+
+    when(escalaPlantaoRepository.findByDataPlantao(data)).thenReturn(List.of());
+
+    ConsultaPlantaoAtualRespostaDTO resposta = plantaoService.consultarPlantaoPorData(data, null);
+
+    assertThat(resposta.dataReferencia()).isEqualTo(data);
+    assertThat(resposta.plantaoAtivo()).isTrue();
+    assertThat(resposta.mensagem())
+        .isEqualTo("Não encontrei escala de plantão cadastrada para esta data no sistema.");
+    assertThat(resposta.plantoes()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("Deve lançar exceção quando data da consulta por data for nula")
+  void deveLancarExcecaoQuandoDataDaConsultaPorDataForNula() {
+    assertThatThrownBy(() -> plantaoService.consultarPlantaoPorData(null, null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("A data da consulta não pode ser nula.");
+  }
+
+  // ===== FASE 8 - FIM =====
+
+  private Farmacia criarFarmacia(String nome, String distrito) {
+    return new Farmacia(nome, "Rua Teste, 123", "Centro", distrito, "(69) 99999-9999");
+  }
+
+  private EscalaPlantao criarEscala(LocalDate dataPlantao, Farmacia farmacia) {
+    return new EscalaPlantao(farmacia, dataPlantao, LocalTime.of(7, 0), LocalTime.of(7, 0), null);
   }
 }

@@ -162,4 +162,119 @@ class PlantaoControllerTest {
         .andExpect(jsonPath("$.dados.plantoes[0].farmacia.nome").value("Farmácia Segundo Distrito"))
         .andExpect(jsonPath("$.dados.plantoes[0].farmacia.distrito").value("Segundo Distrito"));
   }
+
+  // ===== FASE 8 - INÍCIO =====
+  // Testa o novo endpoint:
+  // GET /api/plantoes?data=2026-05-17
+  //
+  // Aqui validamos o contrato HTTP da consulta explícita por data.
+  @Test
+  @DisplayName("Deve consultar plantão por data")
+  void deveConsultarPlantaoPorData() throws Exception {
+    LocalDate dataPlantao = LocalDate.of(2026, 5, 17);
+
+    PlantaoRespostaDTO plantao =
+        new PlantaoRespostaDTO(
+            dataPlantao,
+            LocalTime.of(7, 0),
+            LocalTime.of(7, 0),
+            new FarmaciaRespostaDTO(
+                "Farmácia Real",
+                "Rua dos Mineiros, 298",
+                "Centro",
+                "Primeiro Distrito",
+                "3422-3491"),
+            "Farmácia Real está de plantão das 07:00 às 07:00.");
+
+    ConsultaPlantaoAtualRespostaDTO resposta =
+        new ConsultaPlantaoAtualRespostaDTO(
+            dataPlantao, true, "Plantão encontrado para a data informada.", List.of(plantao));
+
+    when(plantaoService.consultarPlantaoPorData(dataPlantao, null)).thenReturn(resposta);
+
+    mockMvc
+        .perform(get("/api/plantoes").param("data", "2026-05-17"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.sucesso").value(true))
+        .andExpect(jsonPath("$.mensagem").value("Plantão encontrado para a data informada."))
+        .andExpect(jsonPath("$.dados.dataReferencia").value("2026-05-17"))
+        .andExpect(jsonPath("$.dados.plantaoAtivo").value(true))
+        .andExpect(jsonPath("$.dados.plantoes", hasSize(1)))
+        .andExpect(jsonPath("$.dados.plantoes[0].farmacia.nome").value("Farmácia Real"))
+        .andExpect(jsonPath("$.dados.plantoes[0].farmacia.distrito").value("Primeiro Distrito"));
+  }
+
+  @Test
+  @DisplayName("Deve consultar plantão por data e distrito")
+  void deveConsultarPlantaoPorDataEDistrito() throws Exception {
+    LocalDate dataPlantao = LocalDate.of(2026, 5, 17);
+    String distrito = "Segundo Distrito";
+
+    PlantaoRespostaDTO plantao =
+        new PlantaoRespostaDTO(
+            dataPlantao,
+            LocalTime.of(7, 0),
+            LocalTime.of(7, 0),
+            new FarmaciaRespostaDTO(
+                "Saúde Popular",
+                "Av. Brasil, 2000",
+                "Nova Brasília",
+                "Segundo Distrito",
+                "3421-0000"),
+            "Saúde Popular está de plantão das 07:00 às 07:00.");
+
+    ConsultaPlantaoAtualRespostaDTO resposta =
+        new ConsultaPlantaoAtualRespostaDTO(
+            dataPlantao, true, "Plantão encontrado para a data informada.", List.of(plantao));
+
+    when(plantaoService.consultarPlantaoPorData(dataPlantao, distrito)).thenReturn(resposta);
+
+    mockMvc
+        .perform(get("/api/plantoes").param("data", "2026-05-17").param("distrito", distrito))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.sucesso").value(true))
+        .andExpect(jsonPath("$.dados.dataReferencia").value("2026-05-17"))
+        .andExpect(jsonPath("$.dados.plantoes", hasSize(1)))
+        .andExpect(jsonPath("$.dados.plantoes[0].farmacia.nome").value("Saúde Popular"))
+        .andExpect(jsonPath("$.dados.plantoes[0].farmacia.distrito").value("Segundo Distrito"));
+  }
+
+  @Test
+  @DisplayName("Deve retornar erro 400 quando data não for informada")
+  void deveRetornarErroQuandoDataNaoForInformada() throws Exception {
+    mockMvc
+        .perform(get("/api/plantoes"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.erro").value("Requisição inválida"))
+        .andExpect(
+            jsonPath("$.mensagem").value("O parâmetro obrigatório 'data' não foi informado."))
+        .andExpect(jsonPath("$.caminho").value("/api/plantoes"));
+  }
+
+  @Test
+  @DisplayName("Deve retornar erro 400 quando data estiver em formato inválido")
+  void deveRetornarErroQuandoDataEstiverEmFormatoInvalido() throws Exception {
+    mockMvc
+        .perform(get("/api/plantoes").param("data", "17-05-2026"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.erro").value("Requisição inválida"))
+        .andExpect(
+            jsonPath("$.mensagem").value("Formato de data inválido. Use o padrão yyyy-MM-dd."))
+        .andExpect(jsonPath("$.caminho").value("/api/plantoes"));
+  }
+
+  @Test
+  @DisplayName("Deve retornar erro 400 quando distrito da consulta por data for inválido")
+  void deveRetornarErroQuandoDistritoDaConsultaPorDataForInvalido() throws Exception {
+    mockMvc
+        .perform(get("/api/plantoes").param("data", "2026-05-17").param("distrito", "   "))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.erro").value("Requisição inválida"))
+        .andExpect(jsonPath("$.mensagem").value("O distrito não pode ser vazio."))
+        .andExpect(jsonPath("$.caminho").value("/api/plantoes"));
+  }
+  // ===== FASE 8 - FIM =====
 }
