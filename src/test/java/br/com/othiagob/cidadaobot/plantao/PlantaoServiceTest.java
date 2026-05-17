@@ -2,8 +2,6 @@ package br.com.othiagob.cidadaobot.plantao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,23 +27,33 @@ class PlantaoServiceTest {
   @InjectMocks private PlantaoService plantaoService;
 
   @Test
-  @DisplayName("18:59 não deve ter plantão ativo")
-  void deveRetornarVazioQuandoHorarioForDezoitoECinquentaENove() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 18, 59);
-
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
-
-    assertThat(resultado).isEmpty();
-  }
-
-  @Test
-  @DisplayName("19:00 deve retornar plantão da data atual")
-  void deveRetornarDataAtualQuandoHorarioForDezenoveHoras() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 19, 0);
+  @DisplayName("06:59 deve retornar plantão do dia anterior")
+  void deveRetornarDiaAnteriorQuandoHorarioForSeisECinquentaENove() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 6, 59);
 
     Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
 
     assertThat(resultado).contains(LocalDate.of(2026, 5, 10));
+  }
+
+  @Test
+  @DisplayName("07:00 deve retornar plantão da data atual")
+  void deveRetornarDataAtualQuandoHorarioForSeteHoras() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 7, 0);
+
+    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
+
+    assertThat(resultado).contains(LocalDate.of(2026, 5, 11));
+  }
+
+  @Test
+  @DisplayName("12:00 deve retornar plantão da data atual")
+  void deveRetornarDataAtualQuandoHorarioForMeioDia() {
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 12, 0);
+
+    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
+
+    assertThat(resultado).contains(LocalDate.of(2026, 5, 11));
   }
 
   @Test
@@ -69,26 +77,6 @@ class PlantaoServiceTest {
   }
 
   @Test
-  @DisplayName("06:59 deve retornar plantão do dia anterior")
-  void deveRetornarDiaAnteriorQuandoHorarioForSeisECinquentaENove() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 6, 59);
-
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
-
-    assertThat(resultado).contains(LocalDate.of(2026, 5, 10));
-  }
-
-  @Test
-  @DisplayName("07:00 não deve ter plantão ativo")
-  void deveRetornarVazioQuandoHorarioForSeteHoras() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 11, 7, 0);
-
-    Optional<LocalDate> resultado = plantaoService.determinarDataPlantaoAtivo(momento);
-
-    assertThat(resultado).isEmpty();
-  }
-
-  @Test
   @DisplayName("Deve lançar erro quando momento for nulo")
   void deveLancarErroQuandoMomentoForNulo() {
     assertThatThrownBy(() -> plantaoService.determinarDataPlantaoAtivo(null))
@@ -99,7 +87,7 @@ class PlantaoServiceTest {
   @Test
   @DisplayName("Deve buscar plantões ativos pela data calculada")
   void deveBuscarPlantoesAtivosPelaDataCalculada() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 19, 0);
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 12, 0);
     LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
 
     EscalaPlantao escala = criarEscalaPlantao(dataPlantao, "Primeiro Distrito");
@@ -112,18 +100,6 @@ class PlantaoServiceTest {
     assertThat(resultado.get(0).getDataPlantao()).isEqualTo(dataPlantao);
 
     verify(escalaPlantaoRepository).findByDataPlantao(dataPlantao);
-  }
-
-  @Test
-  @DisplayName("Não deve consultar repository quando estiver fora do horário de plantão")
-  void naoDeveConsultarRepositoryQuandoEstiverForaDoHorarioDePlantao() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 12, 0);
-
-    List<EscalaPlantao> resultado = plantaoService.buscarPlantoesAtivos(momento);
-
-    assertThat(resultado).isEmpty();
-
-    verify(escalaPlantaoRepository, never()).findByDataPlantao(any());
   }
 
   @Test
@@ -182,25 +158,9 @@ class PlantaoServiceTest {
   }
 
   @Test
-  @DisplayName("Deve consultar plantão atual fora do horário e retornar plantão inativo")
-  void deveConsultarPlantaoAtualForaDoHorarioERetornarPlantaoInativo() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 12, 0);
-
-    ConsultaPlantaoAtualRespostaDTO resposta = plantaoService.consultarPlantaoAtual(null, momento);
-
-    assertThat(resposta.dataReferencia()).isNull();
-    assertThat(resposta.plantaoAtivo()).isFalse();
-    assertThat(resposta.mensagem())
-        .isEqualTo("Não há plantão ativo neste horário. O plantão funciona das 19:00 às 07:00.");
-    assertThat(resposta.plantoes()).isEmpty();
-
-    verify(escalaPlantaoRepository, never()).findByDataPlantao(any());
-  }
-
-  @Test
   @DisplayName("Deve consultar plantão atual sem distrito quando existir escala cadastrada")
   void deveConsultarPlantaoAtualSemDistritoQuandoExistirEscalaCadastrada() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 22, 0);
+    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 12, 0);
     LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
 
     EscalaPlantao escala = criarEscalaPlantao(dataPlantao, "Primeiro Distrito");
@@ -249,8 +209,8 @@ class PlantaoServiceTest {
   @DisplayName(
       "Deve consultar plantão atual e retornar mensagem quando não houver escala cadastrada")
   void deveConsultarPlantaoAtualERetornarMensagemQuandoNaoHouverEscalaCadastrada() {
-    LocalDateTime momento = LocalDateTime.of(2026, 5, 10, 22, 0);
-    LocalDate dataPlantao = LocalDate.of(2026, 5, 10);
+    LocalDateTime momento = LocalDateTime.of(2026, 7, 1, 12, 0);
+    LocalDate dataPlantao = LocalDate.of(2026, 7, 1);
 
     when(escalaPlantaoRepository.findByDataPlantao(dataPlantao)).thenReturn(List.of());
 
@@ -270,6 +230,6 @@ class PlantaoServiceTest {
         new Farmacia("Farmácia Teste", "Rua Teste, 123", "Centro", distrito, "(69) 99999-9999");
 
     return new EscalaPlantao(
-        farmacia, dataPlantao, LocalTime.of(19, 0), LocalTime.of(7, 0), "Plantão de teste");
+        farmacia, dataPlantao, LocalTime.of(7, 0), LocalTime.of(7, 0), "Plantão de teste");
   }
 }
