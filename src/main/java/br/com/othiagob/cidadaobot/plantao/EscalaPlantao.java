@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,10 +38,14 @@ public class EscalaPlantao {
   @Column(name = "observacoes")
   private String observacoes;
 
-  @Column(name = "criado_em", nullable = false, insertable = false, updatable = false)
+  @Column(name = "criado_em", nullable = false, updatable = false)
   private LocalDateTime criadoEm;
 
-  protected EscalaPlantao() {
+  protected EscalaPlantao() {}
+
+  @PrePersist
+  public void prePersist() {
+    this.criadoEm = LocalDateTime.now();
   }
 
   public EscalaPlantao(
@@ -48,8 +53,7 @@ public class EscalaPlantao {
       LocalDate dataPlantao,
       LocalTime iniciaAs,
       LocalTime terminaAs,
-      String observacoes
-  ) {
+      String observacoes) {
     this.farmacia = farmacia;
     this.dataPlantao = dataPlantao;
     this.iniciaAs = iniciaAs;
