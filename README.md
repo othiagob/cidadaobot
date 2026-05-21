@@ -1,5 +1,7 @@
 # CidadãoBot API — Farmácias de Plantão
 
+![Build e Testes](https://github.com/othiagob/cidadaobot/actions/workflows/build.yml/badge.svg)
+
 API REST para consultar farmácias de plantão em Ji-Paraná/RO.
 
 O projeto nasceu de uma necessidade real: facilitar o acesso a uma informação simples, mas importante, principalmente em horários de urgência. Em vez de depender de uma escala impressa na porta de uma farmácia ou de publicações em redes sociais, a ideia é centralizar os dados em uma API e permitir consultas mais práticas.
