@@ -19,6 +19,9 @@ jobs:
   compilacao:
     name: Validar compilação do projeto
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+      java: [17,21]
 
     steps:
       - name: Baixar código do repositório
@@ -28,7 +31,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Dar permissão ao Maven Wrapper
@@ -40,6 +43,10 @@ jobs:
   testes:
     name: Executar testes automatizados
     runs-on: ubuntu-latest
+    strategy:
+    matrix:
+      java: [17 ,21]
+
 
     needs: compilacao
 
@@ -51,7 +58,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Dar permissão ao Maven Wrapper
