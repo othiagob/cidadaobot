@@ -56,6 +56,7 @@ A API é a fonte de verdade do sistema.
 
 Nenhuma regra de negócio deve ficar no WhatsApp, no n8n ou na IA.
 
+
 ## Arquitetura Interna da API
 
 ```text
@@ -102,6 +103,24 @@ Banco de dados
 | Docker | Empacotamento da aplicação |
 | Docker Compose | Subida da API com PostgreSQL |
 | Maven Wrapper | Execução do Maven sem instalação manual |
+
+## Integração Contínua (CI)
+
+O projeto utiliza GitHub Actions para validação automática da aplicação.
+
+A pipeline executa automaticamente:
+
+- Validação de compilação Maven
+- Testes automatizados
+- Geração do build da aplicação
+- Compatibilidade com Java 17 e Java 21
+
+A cada push ou pull request para a branch `main`, a pipeline garante que o projeto continue íntegro e compilável.
+
+Fluxo da pipeline:
+
+Compilação → Testes → Build
+
 
 ## Regra de Negócio Principal
 
