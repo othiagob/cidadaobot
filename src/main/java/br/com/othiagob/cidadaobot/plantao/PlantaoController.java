@@ -1,7 +1,6 @@
 package br.com.othiagob.cidadaobot.plantao;
 
 import br.com.othiagob.cidadaobot.dto.RespostaApiDTO;
-import br.com.othiagob.cidadaobot.erro.ErroRespostaDTO;
 import br.com.othiagob.cidadaobot.plantao.dto.ConsultaPlantaoAtualRespostaDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,11 +42,11 @@ public class PlantaoController {
   @ApiResponse(
       responseCode = "400",
       description = "Parâmetro inválido na requisição.",
-      content = @Content(schema = @Schema(implementation = ErroRespostaDTO.class)))
+      content = @Content(schema = @Schema(implementation = RespostaApiDTO.class)))
   @ApiResponse(
       responseCode = "500",
       description = "Erro interno inesperado.",
-      content = @Content(schema = @Schema(implementation = ErroRespostaDTO.class)))
+      content = @Content(schema = @Schema(implementation = RespostaApiDTO.class)))
   @GetMapping
   public ResponseEntity<RespostaApiDTO<ConsultaPlantaoAtualRespostaDTO>> buscarPlantaoPorData(
       @Parameter(
@@ -60,7 +59,7 @@ public class PlantaoController {
       @Parameter(
               description = "Filtra opcionalmente a consulta pelo distrito da farmácia.",
               example = "Primeiro Distrito")
-      @RequestParam(required = false)
+          @RequestParam(required = false)
           @Pattern(regexp = ".*\\S.*", message = "O distrito não pode ser vazio.")
           String distrito) {
 
@@ -77,7 +76,7 @@ public class PlantaoController {
           Retorna as farmácias de plantão considerando
           a regra temporal oficial do sistema:
 
-          19:00 até 07:00 do dia seguinte.
+          07:00 de um dia até 07:00 do dia seguinte.
           """)
   @ApiResponse(
       responseCode = "200",
@@ -86,11 +85,11 @@ public class PlantaoController {
   @ApiResponse(
       responseCode = "400",
       description = "Parâmetro inválido na requisição.",
-      content = @Content(schema = @Schema(implementation = ErroRespostaDTO.class)))
+      content = @Content(schema = @Schema(implementation = RespostaApiDTO.class)))
   @ApiResponse(
       responseCode = "500",
       description = "Erro interno inesperado.",
-      content = @Content(schema = @Schema(implementation = ErroRespostaDTO.class)))
+      content = @Content(schema = @Schema(implementation = RespostaApiDTO.class)))
   @GetMapping("/atual")
   public ResponseEntity<RespostaApiDTO<ConsultaPlantaoAtualRespostaDTO>> buscarPlantaoAtual(
       @Parameter(
