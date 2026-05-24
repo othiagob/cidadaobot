@@ -121,6 +121,21 @@ Fluxo da pipeline:
 
 Compilação → Testes → Build
 
+## Testes de integração
+
+Este projeto possui testes de integração com Spring Boot e Testcontainers.
+Durante os testes, um container PostgreSQL real é iniciado automaticamente,
+as migrations Flyway são aplicadas e os principais endpoints REST são validados
+em um ambiente próximo ao de produção.
+
+Comando:
+
+./mvnw test -Dtest=PlantaoControllerIntegrationTest
+
+Para rodar toda a suíte:
+
+./mvnw clean test
+
 
 ## Regra de Negócio Principal
 
