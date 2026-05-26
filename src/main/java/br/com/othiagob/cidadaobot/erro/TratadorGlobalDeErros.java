@@ -3,12 +3,9 @@ package br.com.othiagob.cidadaobot.erro;
 import br.com.othiagob.cidadaobot.dto.RespostaApiDTO;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,95 +15,66 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class TratadorGlobalDeErros {
 
-  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-  public ResponseEntity<RespostaApiDTO> tratarParametroComTipoInvalido(
-      MethodArgumentTypeMismatchException excecao) {
-    String mensagem = "Parâmetro inválido.";
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<RespostaApiDTO> tratarErroDeValidacao(MethodArgumentNotValidException ex) {
+    String mensagem =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(erro -> erro.getField() + ": " + erro.getDefaultMessage())
+            .collect(Collectors.joining("; "));
 
-    if ("data".equals(excecao.getName())) {
-      mensagem = "Data inválida. Formato esperado: AAAA-MM-DD.";
-    }
+    RespostaApiDTO resposta = new RespostaApiDTO(false, mensagem, null, LocalDateTime.now());
 
-    return ResponseEntity.badRequest().body(criarRespostaErro(mensagem));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
   }
 
-  @ExceptionHandler(DateTimeParseException.class)
-  public ResponseEntity<RespostaApiDTO> tratarDataInvalida(DateTimeParseException excecao) {
-    return ResponseEntity.badRequest()
-        .body(criarRespostaErro("Data inválida. Formato esperado: AAAA-MM-DD."));
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<RespostaApiDTO> tratarViolacaoDeRestricao(ConstraintViolationException ex) {
+    String mensagem =
+        ex.getConstraintViolations().stream()
+            .map(violacao -> violacao.getMessage())
+            .collect(Collectors.joining("; "));
+
+    RespostaApiDTO resposta = new RespostaApiDTO(false, mensagem, null, LocalDateTime.now());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
   }
 
   @ExceptionHandler(MissingServletRequestParameterException.class)
   public ResponseEntity<RespostaApiDTO> tratarParametroObrigatorioAusente(
-      MissingServletRequestParameterException excecao) {
-    String mensagem = "Parâmetro obrigatório ausente.";
+      MissingServletRequestParameterException ex) {
+    String mensagem = "Parâmetro obrigatório ausente: " + ex.getParameterName() + ".";
 
-    if ("data".equals(excecao.getParameterName())) {
-      mensagem = "Parâmetro obrigatório ausente: data.";
-    }
+    RespostaApiDTO resposta = new RespostaApiDTO(false, mensagem, null, LocalDateTime.now());
 
-    return ResponseEntity.badRequest().body(criarRespostaErro(mensagem));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
   }
 
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<RespostaApiDTO> tratarErroDeValidacao(
-      MethodArgumentNotValidException excecao) {
-    String mensagem =
-        excecao.getBindingResult().getFieldErrors().stream()
-            .map(this::formatarErroDeCampo)
-            .collect(Collectors.joining("; "));
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<RespostaApiDTO> tratarTipoDeParametroInvalido(
+      MethodArgumentTypeMismatchException ex) {
+    String mensagem = "Parâmetro inválido: " + ex.getName() + ".";
 
-    if (mensagem.isBlank()) {
-      mensagem = "Erro de validação nos dados enviados.";
+    if ("data".equals(ex.getName())) {
+      mensagem = "Data inválida. Formato esperado: AAAA-MM-DD.";
     }
 
-    return ResponseEntity.badRequest().body(criarRespostaErro(mensagem));
-  }
+    RespostaApiDTO resposta = new RespostaApiDTO(false, mensagem, null, LocalDateTime.now());
 
-  @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<RespostaApiDTO> tratarViolacaoDeRestricao(
-      ConstraintViolationException excecao) {
-    String mensagem =
-        excecao.getConstraintViolations().stream()
-            .map(violacao -> violacao.getPropertyPath() + ": " + violacao.getMessage())
-            .collect(Collectors.joining("; "));
-
-    if (mensagem.isBlank()) {
-      mensagem = "Erro de validação nos parâmetros enviados.";
-    }
-
-    return ResponseEntity.badRequest().body(criarRespostaErro(mensagem));
-  }
-
-  @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<RespostaApiDTO> tratarCorpoDaRequisicaoInvalido(
-      HttpMessageNotReadableException excecao) {
-    return ResponseEntity.badRequest()
-        .body(criarRespostaErro("Corpo da requisição inválido ou mal formatado."));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<RespostaApiDTO> tratarArgumentoInvalido(IllegalArgumentException excecao) {
-    String mensagem = excecao.getMessage();
+  public ResponseEntity<RespostaApiDTO> tratarArgumentoInvalido(IllegalArgumentException ex) {
+    RespostaApiDTO resposta = new RespostaApiDTO(false, ex.getMessage(), null, LocalDateTime.now());
 
-    if (mensagem == null || mensagem.isBlank()) {
-      mensagem = "Argumento inválido.";
-    }
-
-    return ResponseEntity.badRequest().body(criarRespostaErro(mensagem));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<RespostaApiDTO> tratarErroInterno(Exception excecao) {
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(criarRespostaErro("Erro interno inesperado na API."));
-  }
+  public ResponseEntity<RespostaApiDTO> tratarErroInterno(Exception ex) {
+    RespostaApiDTO resposta =
+        new RespostaApiDTO(false, "Erro interno inesperado na API.", null, LocalDateTime.now());
 
-  private RespostaApiDTO criarRespostaErro(String mensagem) {
-    return new RespostaApiDTO(false, mensagem, null, LocalDateTime.now());
-  }
-
-  private String formatarErroDeCampo(FieldError erro) {
-    return erro.getField() + ": " + erro.getDefaultMessage();
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resposta);
   }
 }
