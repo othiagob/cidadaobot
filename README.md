@@ -1,251 +1,373 @@
-# CidadãoBot API — Farmácias de Plantão
+# CidadãoBot API
 
-![Build e Testes](https://github.com/othiagob/cidadaobot/actions/workflows/build.yml/badge.svg)
+API REST desenvolvida em Java com Spring Boot para consulta de farmácias de plantão em Ji-Paraná/RO.
 
-API REST para consulta de farmácias de plantão em Ji-Paraná/RO.
-
-O projeto nasceu de uma necessidade real: facilitar o acesso a uma informação simples, mas importante, principalmente em horários de urgência. Em vez de depender de escala impressa na porta de uma farmácia ou de publicações espalhadas em redes sociais, a proposta é centralizar os dados em uma API confiável.
-
-Além da parte funcional, este projeto também é um laboratório de aprendizado backend com Java, Spring Boot, PostgreSQL, Flyway, Docker, testes automatizados, integração contínua e organização profissional de código.
-
-A ideia futura é integrar esta API com n8n, WhatsApp Cloud API e IA para permitir consultas por mensagem. Mesmo nesse cenário, a regra de negócio continuará dentro da API.
+O projeto nasceu como uma solução de utilidade pública para facilitar o acesso da população às informações de farmácias de plantão. Além da funcionalidade principal de consulta, a API também está sendo evoluída como um backend profissional, com arquitetura em camadas, testes automatizados, documentação, Docker, CI e preparação para integração com n8n e WhatsApp Cloud API.
 
 ---
 
-## Sumário
+## Objetivo do projeto
 
-- [Objetivo do Projeto](#objetivo-do-projeto)
-- [Como Surgiu](#como-surgiu)
-- [Arquitetura Geral](#arquitetura-geral)
-- [Arquitetura Interna](#arquitetura-interna)
-- [Regra de Negócio Principal](#regra-de-negócio-principal)
-- [Stack Utilizada](#stack-utilizada)
-- [Endpoints Disponíveis](#endpoints-disponíveis)
-- [Exemplos de Resposta](#exemplos-de-resposta)
-- [Como Rodar com Docker](#como-rodar-com-docker)
-- [Como Rodar em Desenvolvimento Local](#como-rodar-em-desenvolvimento-local)
-- [Profiles da Aplicação](#profiles-da-aplicação)
-- [Banco de Dados e Migrations](#banco-de-dados-e-migrations)
-- [Testes Automatizados](#testes-automatizados)
-- [Integração Contínua](#integração-contínua)
-- [Documentação OpenAPI](#documentação-openapi)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Decisões Técnicas](#decisões-técnicas)
-- [O Que Este Projeto Demonstra](#o-que-este-projeto-demonstra)
-- [Comandos Úteis](#comandos-úteis)
-- [Status Atual](#status-atual)
-- [Próximos Passos](#próximos-passos)
-- [Autor](#autor)
+O CidadãoBot API tem como objetivo centralizar a regra de negócio das farmácias de plantão de Ji-Paraná/RO em uma API confiável.
+
+A API deve ser a fonte oficial de verdade do sistema.
+
+Isso significa que ferramentas externas, como n8n, WhatsApp, agentes de IA ou interfaces web, não devem calcular regras de plantão por conta própria. Elas apenas consomem os dados e respostas fornecidas pela API.
 
 ---
 
-## Objetivo do Projeto
+## Contexto
 
-### Objetivo funcional
+Ji-Paraná/RO possui farmácias organizadas por escala de plantão. A API permite consultar qual farmácia está de plantão em uma data específica ou no momento atual, considerando a regra temporal oficial do projeto.
 
-Disponibilizar uma API REST para consultar farmácias de plantão em Ji-Paraná/RO.
-
-A API permite consultar:
-
-- o plantão atual;
-- o plantão de uma data específica;
-- o plantão filtrado por distrito.
-
-### Objetivo técnico
-
-Construir uma API backend com arquitetura em camadas, persistência relacional, versionamento de banco, testes automatizados, documentação OpenAPI, Docker e integração contínua.
-
-### Objetivo de aprendizado
-
-Praticar backend Java com foco em:
-
-- Spring Boot;
-- REST APIs;
-- JPA;
-- PostgreSQL;
-- Flyway;
-- DTOs;
-- tratamento global de erros;
-- testes unitários;
-- testes WebMvc;
-- testes JPA;
-- testes de integração com banco real;
-- Docker;
-- GitHub Actions;
-- boas práticas de arquitetura.
-
-### Objetivo profissional
-
-Usar um problema real como base para construir um projeto de portfólio, demonstrando evolução técnica em backend Java e preparação para entrevistas técnicas.
+Além disso, a API também possui uma funcionalidade de histórico de conversas, criada para registrar interações realizadas por usuários em integrações futuras com n8n e WhatsApp.
 
 ---
 
-## Como Surgiu
+## Funcionalidades implementadas
 
-A ideia surgiu da dificuldade de acessar rapidamente qual farmácia está de plantão em Ji-Paraná/RO.
+- Consulta de plantão atual
+- Consulta de plantão por data
+- Filtro opcional por distrito
+- Persistência de farmácias
+- Persistência de escalas de plantão
+- Persistência de histórico de conversas
+- Registro de interações do CidadãoBot
+- Consulta de histórico por telefone
+- DTOs para entrada e saída de dados
+- Tratamento global de erros
+- Validações de entrada
+- Documentação OpenAPI/Swagger
+- Testes unitários
+- Testes JPA
+- Testes WebMvc
+- Testes de integração com Spring Boot completo
+- Testcontainers com PostgreSQL real
+- Docker
+- Docker Compose
+- GitHub Actions CI
+- Separação entre testes rápidos e testes de integração
 
-Hoje, muitas vezes essa informação depende de escala impressa, publicações em redes sociais ou contato direto com farmácias. Isso funciona, mas não é prático em situações de urgência.
+---
 
-O objetivo do CidadãoBot API é transformar essa informação em um serviço digital consultável, organizado e confiável.
+## Tecnologias utilizadas
 
-A proposta futura é permitir que uma pessoa envie uma mensagem pelo WhatsApp perguntando algo como:
+- Java 17
+- Spring Boot 3.5
+- Spring Web
+- Spring Data JPA
+- Bean Validation
+- PostgreSQL
+- Flyway
+- Maven Wrapper
+- JUnit 5
+- Mockito
+- H2 Database para testes rápidos
+- Testcontainers
+- Docker
+- Docker Compose
+- SpringDoc OpenAPI
+- GitHub Actions
+
+---
+
+## Arquitetura
+
+O projeto segue arquitetura em camadas:
 
 ```text
-Qual farmácia está de plantão hoje?
-```
-
-O n8n poderá interpretar o fluxo, uma IA poderá entender a intenção, mas quem decide a resposta oficial será sempre a API.
-
----
-
-## Arquitetura Geral
-
-Fluxo planejado do produto completo:
-
-```text
-Usuário
-  ↓
-WhatsApp
-  ↓
-n8n
-  ↓
-API Spring Boot
-  ↓
-PostgreSQL
-```
-
-Responsabilidades:
-
-- o WhatsApp será a interface de conversa;
-- o n8n fará a orquestração do fluxo;
-- a IA poderá interpretar a intenção da mensagem;
-- a API Spring Boot aplicará as regras de negócio;
-- o PostgreSQL armazenará farmácias e escalas oficiais.
-
-A API é a fonte de verdade do sistema.
-
-Nenhuma regra de negócio deve ficar no WhatsApp, no n8n ou na IA.
-
----
-
-## Arquitetura Interna
-
-A aplicação segue uma arquitetura em camadas:
-
-```text
+Requisição HTTP
+    ↓
 Controller
-  ↓
+    ↓
 Service
-  ↓
+    ↓
 Repository
-  ↓
+    ↓
 Banco de dados
 ```
 
-### Controller
+Responsabilidades principais:
 
-Responsável por:
+| Camada | Responsabilidade |
+|---|---|
+| Controller | Receber requisições HTTP, validar entrada básica e devolver respostas |
+| Service | Executar regras de negócio e regras de aplicação |
+| Repository | Acessar o banco de dados |
+| Entity | Representar tabelas do banco |
+| DTO | Definir os dados que entram e saem pela API |
 
-- receber requisições HTTP;
-- validar parâmetros básicos;
-- chamar a camada Service;
-- retornar respostas JSON padronizadas.
-
-O Controller não deve conter regra de negócio.
-
-### Service
-
-Responsável por:
-
-- concentrar regras de negócio;
-- determinar a data de referência do plantão;
-- validar regras do domínio;
-- buscar dados por meio dos repositories;
-- montar DTOs de resposta.
-
-A regra temporal do plantão fica nesta camada.
-
-### Repository
-
-Responsável por:
-
-- acessar o banco de dados;
-- executar consultas com Spring Data JPA;
-- retornar entidades JPA para a camada Service.
-
-Repository não deve conter regra de negócio.
-
-### DTOs
-
-A API não retorna entidades JPA diretamente.
-
-As respostas são expostas por DTOs, mantendo o contrato externo desacoplado do modelo interno do banco.
+A API não expõe entidades JPA diretamente. Todas as respostas públicas usam DTOs.
 
 ---
 
-## Regra de Negócio Principal
+## Domínios principais
 
-A escala oficial de plantão funciona como um ciclo de 24 horas:
+### Farmácia
+
+Representa uma farmácia cadastrada no sistema.
+
+Principais dados:
+
+- nome
+- endereço
+- bairro
+- distrito
+- telefone
+
+### Plantão
+
+Representa a escala de plantão de uma farmácia em uma determinada data.
+
+Principais dados:
+
+- data do plantão
+- horário de início
+- horário de término
+- farmácia responsável
+
+### Conversa
+
+Representa o histórico de uma interação realizada com o CidadãoBot.
+
+Principais dados:
+
+- telefone do usuário
+- mensagem recebida
+- resposta enviada
+- intenção detectada
+- distrito detectado
+- data de referência
+- origem da interação
+- data de criação
+
+---
+
+## Regra temporal do plantão
+
+A regra oficial do projeto considera que o plantão funciona em ciclo de 24 horas, iniciando às 07:00 e terminando às 07:00 do dia seguinte.
 
 ```text
-07:00 de um dia até 07:00 do dia seguinte
+07:00 de um dia → 07:00 do dia seguinte
 ```
 
-A API usa 07:00 como horário de virada para determinar a data de referência do plantão.
+Tabela de referência:
 
-Exemplos:
-
-| Momento da consulta | Data de referência |
-| --- | --- |
-| 22:00 do dia 10 | dia 10 |
-| 02:00 do dia 11 | dia 10 |
+| Horário da consulta | Data de referência |
+|---|---|
 | 06:59 do dia 11 | dia 10 |
 | 07:00 do dia 11 | dia 11 |
-| 18:59 do dia 11 | dia 11 |
-| 19:00 do dia 11 | dia 11 |
+| 22:00 do dia 11 | dia 11 |
+| 02:00 do dia 12 | dia 11 |
 
-Essa regra fica na camada Service, no método responsável por determinar a data ativa do plantão.
-
----
-
-## Stack Utilizada
-
-| Tecnologia | Finalidade |
-| --- | --- |
-| Java 17 | Linguagem principal |
-| Spring Boot 3.5 | Base da aplicação |
-| Spring Web | Endpoints REST |
-| Spring Data JPA | Persistência com repositories |
-| PostgreSQL 15 | Banco principal |
-| Flyway | Versionamento do banco de dados |
-| Bean Validation | Validação de parâmetros |
-| JUnit 5 | Testes automatizados |
-| Mockito | Mocks em testes unitários e WebMvc |
-| H2 | Banco em memória para testes rápidos |
-| Testcontainers | Testes de integração com PostgreSQL real |
-| Docker | Empacotamento da aplicação |
-| Docker Compose | Subida da API com PostgreSQL |
-| SpringDoc OpenAPI | Documentação Swagger |
-| Maven Wrapper | Execução padronizada do Maven |
-| GitHub Actions | Integração contínua |
+A lógica temporal fica centralizada na Service do domínio de plantão.
 
 ---
 
-## Endpoints Disponíveis
+## Estrutura principal do projeto
 
-### Consultar plantão atual
+```text
+src/main/java/br/com/othiagob/cidadaobot
+├── CidadaobotApplication.java
+├── configuracao/
+│   └── OpenApiConfig.java
+├── dto/
+│   └── RespostaApiDTO.java
+├── erro/
+│   └── TratadorGlobalDeErros.java
+├── farmacia/
+│   ├── Farmacia.java
+│   └── FarmaciaRepository.java
+├── plantao/
+│   ├── EscalaPlantao.java
+│   ├── EscalaPlantaoRepository.java
+│   ├── PlantaoController.java
+│   ├── PlantaoService.java
+│   └── dto/
+│       ├── ConsultaPlantaoAtualRespostaDTO.java
+│       ├── FarmaciaRespostaDTO.java
+│       └── PlantaoRespostaDTO.java
+└── conversa/
+    ├── Conversa.java
+    ├── ConversaRepository.java
+    ├── ConversaService.java
+    ├── ConversaController.java
+    └── dto/
+        ├── ConversaRegistroRequestDTO.java
+        └── ConversaRespostaDTO.java
+```
+
+---
+
+## Banco de dados
+
+O projeto usa PostgreSQL como banco principal.
+
+O versionamento do banco é feito com Flyway.
+
+As migrations ficam em:
+
+```text
+src/main/resources/db/migration/
+```
+
+Regra importante:
+
+```text
+Nunca alterar uma migration já aplicada.
+Toda mudança no schema deve ser feita com uma nova migration.
+```
+
+---
+
+## Principais tabelas
+
+### farmacias
+
+Armazena as farmácias cadastradas.
+
+### escala_plantao
+
+Armazena as escalas de plantão das farmácias.
+
+### conversas
+
+Armazena o histórico de interações realizadas com o CidadãoBot.
+
+Campos principais:
+
+| Campo | Descrição |
+|---|---|
+| id | Identificador da conversa |
+| telefone_usuario | Telefone do usuário |
+| mensagem_usuario | Mensagem recebida |
+| resposta_enviada | Resposta enviada pelo CidadãoBot |
+| intencao_detectada | Intenção interpretada pela IA ou fluxo externo |
+| distrito_detectado | Distrito identificado na conversa |
+| data_referencia | Data usada como referência na resposta |
+| origem | Origem da interação |
+| criada_em | Data e hora do registro |
+
+---
+
+## Configuração de ambiente
+
+O projeto trabalha com profiles do Spring.
+
+| Profile | Uso |
+|---|---|
+| dev | Desenvolvimento local |
+| test | Testes automatizados rápidos |
+| integration | Testes de integração |
+| prod | Execução em Docker/produção |
+
+---
+
+## Como rodar em desenvolvimento
+
+Suba a aplicação em modo dev:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Por padrão, a API em dev roda em:
+
+```text
+http://localhost:8081
+```
+
+---
+
+## Como rodar com Docker
+
+Subir os containers:
+
+```bash
+docker compose up -d
+```
+
+Verificar containers:
+
+```bash
+docker compose ps
+```
+
+Ver logs da API:
+
+```bash
+docker compose logs -f api
+```
+
+Parar os containers:
+
+```bash
+docker compose down
+```
+
+Parar e remover volumes:
+
+```bash
+docker compose down -v
+```
+
+---
+
+## Documentação Swagger
+
+Com a aplicação rodando, acesse:
+
+```text
+http://localhost:8081/swagger-ui.html
+```
+
+ou, dependendo do ambiente:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+A documentação OpenAPI permite testar os endpoints diretamente pelo navegador.
+
+---
+
+## Padrão de resposta da API
+
+Todas as respostas seguem o padrão `RespostaApiDTO`.
+
+Exemplo de sucesso:
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Operação realizada com sucesso.",
+  "dados": {},
+  "timestamp": "2026-05-25T23:04:35.325037566"
+}
+```
+
+Exemplo de erro:
+
+```json
+{
+  "sucesso": false,
+  "mensagem": "Mensagem de erro.",
+  "dados": null,
+  "timestamp": "2026-05-25T23:05:11.441381692"
+}
+```
+
+---
+
+# Endpoints de plantão
+
+## Consultar plantão atual
 
 ```http
 GET /api/plantoes/atual
 ```
 
-Exemplo com Docker/prod:
-
-```bash
-curl -s "http://localhost:8080/api/plantoes/atual" | jq
-```
-
-Exemplo em dev/local:
+Exemplo:
 
 ```bash
 curl -s "http://localhost:8081/api/plantoes/atual" | jq
@@ -257,41 +379,19 @@ Com filtro por distrito:
 curl -s "http://localhost:8081/api/plantoes/atual?distrito=Primeiro%20Distrito" | jq
 ```
 
-### Consultar plantão por data
-
-```http
-GET /api/plantoes?data=AAAA-MM-DD
-```
-
-Exemplo:
-
-```bash
-curl -s "http://localhost:8081/api/plantoes?data=2026-05-17" | jq
-```
-
-Com filtro por distrito:
-
-```bash
-curl -s "http://localhost:8081/api/plantoes?data=2026-05-17&distrito=Segundo%20Distrito" | jq
-```
-
----
-
-## Exemplos de Resposta
-
-### Resposta de sucesso
+Exemplo de resposta:
 
 ```json
 {
   "sucesso": true,
-  "mensagem": "Plantão encontrado para a data informada.",
+  "mensagem": "Plantão ativo encontrado.",
   "dados": {
-    "dataReferencia": "2026-05-17",
+    "dataReferencia": "2026-05-25",
     "plantaoAtivo": true,
-    "mensagem": "Plantão encontrado para a data informada.",
+    "mensagem": "Plantão ativo encontrado.",
     "plantoes": [
       {
-        "dataPlantao": "2026-05-17",
+        "dataPlantao": "2026-05-25",
         "iniciaAs": "07:00:00",
         "terminaAs": "07:00:00",
         "farmacia": {
@@ -305,631 +405,607 @@ curl -s "http://localhost:8081/api/plantoes?data=2026-05-17&distrito=Segundo%20D
       }
     ]
   },
-  "timestamp": "2026-05-18T10:30:00"
+  "timestamp": "2026-05-25T23:00:00"
 }
 ```
 
-### Resposta sem escala cadastrada
+---
 
-Quando não há escala cadastrada para a data consultada, a API não inventa dados.
+## Consultar plantão por data
+
+```http
+GET /api/plantoes?data=2026-05-25
+```
+
+Exemplo:
+
+```bash
+curl -s "http://localhost:8081/api/plantoes?data=2026-05-25" | jq
+```
+
+Com filtro por distrito:
+
+```bash
+curl -s "http://localhost:8081/api/plantoes?data=2026-05-25&distrito=Segundo%20Distrito" | jq
+```
+
+---
+
+# Endpoints de conversas
+
+A funcionalidade de conversas foi criada para registrar e consultar o histórico de interações do CidadãoBot.
+
+Ela prepara o backend para integrações futuras com:
+
+- n8n
+- WhatsApp Cloud API
+- agentes de IA
+- dashboards internos
+- auditoria de atendimento
+
+Importante:
+
+```text
+O histórico de conversas não contém regra de plantão.
+Ele apenas registra o que aconteceu em uma interação.
+```
+
+A regra principal de plantão continua no domínio `plantao`.
+
+---
+
+## Registrar uma interação
+
+```http
+POST /api/conversas
+```
+
+Exemplo:
+
+```bash
+curl -s -X POST "http://localhost:8081/api/conversas" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "telefoneUsuario": "5569999999999",
+    "mensagemUsuario": "Qual farmácia está de plantão hoje?",
+    "respostaEnviada": "Hoje a farmácia de plantão é FARMACIA REAL.",
+    "intencaoDetectada": "CONSULTAR_PLANTAO_ATUAL",
+    "distritoDetectado": "Primeiro Distrito",
+    "dataReferencia": "2026-05-24",
+    "origem": "WHATSAPP"
+  }' | jq
+```
+
+Exemplo de resposta:
 
 ```json
 {
   "sucesso": true,
-  "mensagem": "Não encontrei escala de plantão cadastrada para esta data no sistema.",
+  "mensagem": "Interação registrada com sucesso.",
   "dados": {
-    "dataReferencia": "2026-05-17",
-    "plantaoAtivo": true,
-    "mensagem": "Não encontrei escala de plantão cadastrada para esta data no sistema.",
-    "plantoes": []
+    "id": 4,
+    "telefoneUsuario": "5569999999999",
+    "mensagemUsuario": "Qual farmácia está de plantão hoje?",
+    "respostaEnviada": "Hoje a farmácia de plantão é FARMACIA REAL.",
+    "intencaoDetectada": "CONSULTAR_PLANTAO_ATUAL",
+    "distritoDetectado": "Primeiro Distrito",
+    "dataReferencia": "2026-05-24",
+    "origem": "WHATSAPP",
+    "criadaEm": "2026-05-25T23:04:35.301048"
   },
-  "timestamp": "2026-05-18T10:30:00"
+  "timestamp": "2026-05-25T23:04:35.325037566"
 }
 ```
 
-### Resposta de erro
+---
 
-Exemplo de data inválida:
+## Consultar histórico por telefone
+
+```http
+GET /api/conversas?telefone=5569999999999
+```
+
+Exemplo:
+
+```bash
+curl -s "http://localhost:8081/api/conversas?telefone=5569999999999" | jq
+```
+
+---
+
+## Consultar histórico por telefone com limite
+
+```http
+GET /api/conversas?telefone=5569999999999&limite=10
+```
+
+Exemplo:
+
+```bash
+curl -s "http://localhost:8081/api/conversas?telefone=5569999999999&limite=10" | jq
+```
+
+Exemplo de resposta:
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Histórico de conversas consultado com sucesso.",
+  "dados": [
+    {
+      "id": 4,
+      "telefoneUsuario": "5569999999999",
+      "mensagemUsuario": "Qual farmácia está de plantão hoje?",
+      "respostaEnviada": "Hoje a farmácia de plantão é FARMACIA REAL.",
+      "intencaoDetectada": "CONSULTAR_PLANTAO_ATUAL",
+      "distritoDetectado": "Primeiro Distrito",
+      "dataReferencia": "2026-05-24",
+      "origem": "WHATSAPP",
+      "criadaEm": "2026-05-25T23:04:35.301048"
+    }
+  ],
+  "timestamp": "2026-05-25T23:04:44.250917542"
+}
+```
+
+---
+
+## Campos do cadastro de conversa
+
+| Campo | Obrigatório | Descrição |
+|---|---:|---|
+| telefoneUsuario | Sim | Telefone do usuário que enviou a mensagem |
+| mensagemUsuario | Sim | Mensagem recebida do usuário |
+| respostaEnviada | Sim | Resposta enviada pelo CidadãoBot |
+| intencaoDetectada | Não | Intenção detectada pela IA ou pelo fluxo externo |
+| distritoDetectado | Não | Distrito identificado na conversa |
+| dataReferencia | Não | Data usada como referência na resposta |
+| origem | Sim | Origem da interação |
+
+Exemplos de origem:
+
+```text
+WHATSAPP
+N8N
+API
+TESTE
+```
+
+---
+
+## Validações de conversas
+
+Campos obrigatórios no cadastro:
+
+- `telefoneUsuario`
+- `mensagemUsuario`
+- `respostaEnviada`
+- `origem`
+
+O parâmetro `limite` deve respeitar:
+
+```text
+mínimo: 1
+máximo: 100
+padrão: 10
+```
+
+Exemplo de erro de validação:
+
+```json
+{
+  "sucesso": false,
+  "mensagem": "telefoneUsuario: Telefone do usuário é obrigatório.; mensagemUsuario: Mensagem do usuário é obrigatória.; respostaEnviada: Resposta enviada é obrigatória.; origem: Origem é obrigatória.",
+  "dados": null,
+  "timestamp": "2026-05-25T23:05:11.441381692"
+}
+```
+
+---
+
+# Testes
+
+O projeto possui testes em múltiplas camadas.
+
+## Testes rápidos
+
+Rodar todos os testes rápidos:
+
+```bash
+./mvnw test
+```
+
+Rodar um teste específico:
+
+```bash
+./mvnw test -Dtest=PlantaoServiceTest
+```
+
+Outro exemplo:
+
+```bash
+./mvnw test -Dtest=ConversaServiceTest
+```
+
+---
+
+## Testes de integração
+
+Rodar o ciclo completo:
+
+```bash
+./mvnw verify
+```
+
+Rodar teste de integração específico:
+
+```bash
+./mvnw verify -Dit.test=ConversaIntegrationIT
+```
+
+---
+
+## Tipos de teste usados
+
+| Tipo | Exemplo | Objetivo |
+|---|---|---|
+| Unitário | `PlantaoServiceTest`, `ConversaServiceTest` | Testar regra isolada |
+| JPA | `EscalaPlantaoRepositoryTest`, `ConversaRepositoryTest` | Testar persistência e queries |
+| WebMvc | `PlantaoControllerTest`, `ConversaControllerTest` | Testar contrato HTTP |
+| Integração | `ConversaIntegrationIT` | Testar fluxo completo |
+
+---
+
+## Testes do domínio de conversas
+
+A Fase 15 adicionou testes para a funcionalidade de histórico.
+
+Arquivos principais:
+
+```text
+src/test/java/br/com/othiagob/cidadaobot/conversa/
+├── ConversaServiceTest.java
+├── ConversaRepositoryTest.java
+├── ConversaControllerTest.java
+└── ConversaIntegrationIT.java
+```
+
+Esses testes validam:
+
+- registro de interação;
+- conversão entre Entity e DTO;
+- consulta por telefone;
+- limite padrão;
+- limite máximo;
+- ordenação por data de criação;
+- validação de entrada;
+- tratamento de erros;
+- fluxo completo da API.
+
+---
+
+# Integração com n8n e WhatsApp
+
+A arquitetura prevista para integração é:
+
+```text
+Usuário no WhatsApp
+    ↓
+WhatsApp Cloud API
+    ↓
+n8n
+    ↓
+IA interpreta intenção
+    ↓
+n8n chama a API
+    ↓
+CidadãoBot API executa a regra
+    ↓
+n8n envia a resposta ao usuário
+```
+
+O n8n deve:
+
+- receber mensagens;
+- orquestrar o fluxo;
+- chamar a API;
+- enviar resposta ao usuário;
+- registrar a conversa na API.
+
+O n8n não deve:
+
+- calcular plantão;
+- decidir qual farmácia está de plantão;
+- duplicar regra de negócio;
+- substituir a API como fonte de verdade.
+
+---
+
+## Exemplo de uso futuro com n8n
+
+Fluxo esperado:
+
+1. Usuário pergunta no WhatsApp:
+   ```text
+   Qual farmácia está de plantão hoje?
+   ```
+
+2. n8n interpreta a intenção:
+   ```json
+   {
+     "intencao": "CONSULTAR_PLANTAO_ATUAL",
+     "distrito": null,
+     "data": null
+   }
+   ```
+
+3. n8n chama:
+   ```http
+   GET /api/plantoes/atual
+   ```
+
+4. API retorna o plantão.
+
+5. n8n envia a resposta ao usuário.
+
+6. n8n registra a interação:
+   ```http
+   POST /api/conversas
+   ```
+
+---
+
+# Tratamento de erros
+
+A API possui tratamento global de erros em:
+
+```text
+src/main/java/br/com/othiagob/cidadaobot/erro/TratadorGlobalDeErros.java
+```
+
+Esse tratador padroniza respostas para:
+
+- erro de validação no body;
+- parâmetro obrigatório ausente;
+- parâmetro com formato inválido;
+- violação de restrição;
+- argumento inválido;
+- erro interno inesperado.
+
+Exemplo de erro por data inválida:
 
 ```bash
 curl -s "http://localhost:8081/api/plantoes?data=17-05-2026" | jq
 ```
 
-Resposta:
+Resposta esperada:
 
 ```json
 {
   "sucesso": false,
   "mensagem": "Data inválida. Formato esperado: AAAA-MM-DD.",
   "dados": null,
-  "timestamp": "2026-05-18T10:30:00"
+  "timestamp": "2026-05-25T23:00:00"
 }
 ```
 
 ---
 
-## Como Rodar com Docker
+# CI com GitHub Actions
 
-Pré-requisitos:
+O projeto possui pipeline de integração contínua com GitHub Actions.
 
-- Docker;
-- Docker Compose;
-- Git;
-- jq, opcional, mas recomendado para visualizar JSON no terminal.
+A CI valida:
 
-Clone o repositório:
+- compilação;
+- testes rápidos;
+- testes de integração;
+- build Maven;
+- compatibilidade em matriz Java.
 
-```bash
-git clone https://github.com/othiagob/cidadaobot.git
-cd cidadaobot
+Arquivo principal:
+
+```text
+.github/workflows/build.yml
 ```
-
-Crie o arquivo de ambiente:
-
-```bash
-cp .env.example .env
-nvim .env
-```
-
-Suba a aplicação com Docker Compose:
-
-```bash
-docker compose up -d
-```
-
-Verifique os containers:
-
-```bash
-docker compose ps
-```
-
-Acompanhe os logs da API:
-
-```bash
-docker compose logs -f api
-```
-
-Teste a API:
-
-```bash
-curl -s "http://localhost:8080/api/plantoes/atual" | jq
-```
-
-Para parar os containers:
-
-```bash
-docker compose down
-```
-
-Para parar e remover os volumes do banco local:
-
-```bash
-docker compose down -v
-```
-
-Use `down -v` com cuidado, pois isso remove os dados persistidos localmente.
 
 ---
 
-## Como Rodar em Desenvolvimento Local
+# Comandos úteis
 
-Pré-requisitos:
-
-- Java 17;
-- Docker ou PostgreSQL local;
-- Maven Wrapper já incluído no projeto;
-- jq opcional.
-
-No profile `dev`, a aplicação roda em:
-
-```text
-http://localhost:8081
-```
-
-Antes de iniciar a API localmente, mantenha um PostgreSQL disponível com as configurações esperadas pelo profile `dev`.
-
-Execute:
+## Rodar aplicação em dev
 
 ```bash
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Teste:
-
-```bash
-curl -s "http://localhost:8081/api/plantoes/atual" | jq
-```
-
-Consulta por data:
-
-```bash
-curl -s "http://localhost:8081/api/plantoes?data=2026-05-17" | jq
-```
-
----
-
-## Profiles da Aplicação
-
-### dev
-
-Ambiente local de desenvolvimento.
-
-Características:
-
-- usa PostgreSQL;
-- roda na porta `8081`;
-- Flyway ativo;
-- Hibernate valida o schema;
-- logs mais úteis para desenvolvimento.
-
-### test
-
-Ambiente usado pelos testes rápidos.
-
-Características:
-
-- usa H2 em memória;
-- não depende de Docker;
-- usado em testes unitários, JPA e WebMvc;
-- executado com `./mvnw test`.
-
-### integration
-
-Ambiente usado pelos testes de integração.
-
-Características:
-
-- usa PostgreSQL real via Testcontainers;
-- aplica migrations Flyway reais;
-- sobe o contexto completo do Spring Boot;
-- valida a API em um ambiente próximo ao de produção;
-- executado no ciclo `verify`.
-
-### prod
-
-Ambiente usado no Docker e preparado para produção.
-
-Características:
-
-- usa PostgreSQL;
-- lê configurações por variáveis de ambiente;
-- Flyway ativo;
-- Hibernate em modo `validate`;
-- roda na porta `8080`.
-
----
-
-## Banco de Dados e Migrations
-
-O PostgreSQL é o banco principal da aplicação.
-
-O Flyway controla a estrutura do banco por meio dos arquivos em:
-
-```text
-src/main/resources/db/migration
-```
-
-Migrations existentes:
-
-```text
-V1__criar_tabela_farmacias.sql
-V2__criar_tabela_escala_plantao.sql
-V3__adicionar_restricoes_escala_plantao.sql
-V4__adicionar_restricao_farmacia.sql
-V5__inserir_farmacias_iniciais.sql
-V6__inserir_escalas_maio_junho_2026.sql
-V7__ajustar_horario_padrao_plantao.sql
-```
-
-Regra importante:
-
-```text
-Migration já aplicada não deve ser editada.
-```
-
-Se for necessário alterar algo no banco, deve ser criada uma nova migration.
-
-Em `dev` e `prod`, o Hibernate não cria nem altera tabelas automaticamente. Ele apenas valida o schema:
-
-```properties
-spring.jpa.hibernate.ddl-auto=validate
-```
-
----
-
-## Testes Automatizados
-
-O projeto possui testes em múltiplas camadas.
-
-### Testes unitários
-
-Validam regras de negócio isoladas.
-
-Exemplo:
-
-```text
-PlantaoServiceTest
-```
-
-Cobrem principalmente:
-
-- regra temporal do plantão;
-- data de referência;
-- comportamento com e sem dados;
-- filtro por distrito.
-
-### Testes JPA
-
-Validam persistência e queries com Spring Data JPA.
-
-Exemplos:
-
-```text
-FarmaciaRepositoryTest
-EscalaPlantaoRepositoryTest
-```
-
-Cobrem:
-
-- mapeamento das entidades;
-- relacionamento entre farmácia e escala;
-- consultas por data;
-- consultas por data e distrito.
-
-### Testes WebMvc
-
-Validam a camada HTTP de forma isolada.
-
-Exemplo:
-
-```text
-PlantaoControllerTest
-```
-
-Cobrem:
-
-- endpoints REST;
-- resposta JSON padronizada;
-- validação de parâmetros;
-- erros de entrada;
-- contrato com `RespostaApiDTO`.
-
-### Testes de integração
-
-Validam o fluxo completo da aplicação.
-
-Exemplo:
-
-```text
-PlantaoControllerIT
-```
-
-Durante esses testes:
-
-- o Testcontainers inicia um PostgreSQL temporário;
-- o Flyway aplica as migrations reais;
-- o Spring Boot sobe com contexto completo;
-- o Tomcat roda em porta aleatória;
-- a API é chamada via HTTP real;
-- Controller, Service, Repository e Banco são testados juntos.
-
-Fluxo validado:
-
-```text
-HTTP real
-  ↓
-Controller real
-  ↓
-Service real
-  ↓
-Repository real
-  ↓
-PostgreSQL real
-  ↓
-JSON real
-```
-
-### Rodar testes rápidos
+## Rodar testes rápidos
 
 ```bash
 ./mvnw test
 ```
 
-Esse comando executa testes unitários, JPA e WebMvc.
-
-### Rodar validação completa
+## Rodar ciclo completo
 
 ```bash
 ./mvnw verify
 ```
 
-Esse comando executa os testes rápidos e também os testes de integração com Testcontainers.
-
-### Rodar somente o teste de integração
-
-```bash
-./mvnw verify -Dit.test=PlantaoControllerIT
-```
-
----
-
-## Integração Contínua
-
-O projeto utiliza GitHub Actions para validação automática.
-
-A pipeline atual executa:
-
-- validação de compilação Maven;
-- testes automatizados;
-- build da aplicação;
-- matriz com Java 17 e Java 21.
-
-Fluxo geral:
-
-```text
-Compilação
-  ↓
-Testes
-  ↓
-Build
-```
-
-A cada push ou pull request para a branch `main`, a pipeline valida se o projeto continua compilando e se os testes passam.
-
----
-
-## Documentação OpenAPI
-
-A API possui documentação automática com SpringDoc OpenAPI.
-
-Com a aplicação rodando em Docker/prod:
-
-```text
-http://localhost:8080/swagger-ui.html
-```
-
-Com a aplicação rodando em dev/local:
-
-```text
-http://localhost:8081/swagger-ui.html
-```
-
-A documentação permite visualizar os endpoints disponíveis, parâmetros aceitos e respostas esperadas.
-
----
-
-## Estrutura do Projeto
-
-```text
-src
-├── main
-│   ├── java
-│   │   └── br/com/othiagob/cidadaobot
-│   │       ├── configuracao
-│   │       ├── dto
-│   │       ├── erro
-│   │       ├── farmacia
-│   │       └── plantao
-│   │           └── dto
-│   └── resources
-│       ├── application.properties
-│       ├── application-dev.properties
-│       ├── application-prod.properties
-│       └── db/migration
-└── test
-    ├── java
-    │   └── br/com/othiagob/cidadaobot
-    │       ├── farmacia
-    │       ├── integracao
-    │       └── plantao
-    └── resources
-        ├── application-test.properties
-        ├── application-integration.properties
-        ├── docker-java.properties
-        └── mockito-extensions
-```
-
-Pacotes principais:
-
-| Pacote | Responsabilidade |
-| --- | --- |
-| `configuracao` | Configurações da aplicação |
-| `dto` | DTOs globais |
-| `erro` | Tratamento global de erros |
-| `farmacia` | Domínio de farmácias |
-| `plantao` | Domínio de escalas e consultas de plantão |
-| `plantao/dto` | DTOs específicos de plantão |
-| `integracao` | Testes de integração com ambiente real |
-
----
-
-## Decisões Técnicas
-
-### Java 17
-
-Versão estável, madura e amplamente usada em projetos backend com Spring Boot.
-
-### Spring Boot
-
-Facilita a criação de APIs REST, configuração da aplicação, injeção de dependência, integração com banco e testes.
-
-### PostgreSQL
-
-Banco relacional confiável, com boa aderência a aplicações reais e ambientes de produção.
-
-### Flyway
-
-Mantém o histórico do banco versionado e reproduzível.
-
-### JPA
-
-Permite trabalhar com entidades Java e repositories, mantendo integração com o banco relacional.
-
-### DTOs
-
-Evitam expor entidades JPA diretamente e deixam o contrato externo da API mais estável.
-
-### Tratamento global de erros
-
-Centraliza erros em uma única camada e mantém respostas padronizadas.
-
-### Docker
-
-Permite subir API e banco de forma reproduzível.
-
-### Testcontainers
-
-Permite testar a aplicação contra um PostgreSQL real descartável, aproximando os testes do ambiente de produção.
-
-### Separação entre `test` e `verify`
-
-O projeto separa testes rápidos e testes de integração:
-
-```text
-./mvnw test
-```
-
-para validação rápida durante desenvolvimento.
-
-```text
-./mvnw verify
-```
-
-para validação completa com banco real e ambiente mais próximo de produção.
-
----
-
-## O Que Este Projeto Demonstra
-
-Este projeto demonstra conhecimentos práticos em:
-
-- criação de API REST com Spring Boot;
-- modelagem de domínio;
-- separação de responsabilidades;
-- persistência com JPA;
-- uso de PostgreSQL;
-- versionamento de banco com Flyway;
-- criação de DTOs;
-- tratamento global de erros;
-- validação de parâmetros;
-- testes automatizados em múltiplas camadas;
-- testes de integração com Testcontainers;
-- Docker e Docker Compose;
-- profiles por ambiente;
-- documentação OpenAPI;
-- integração contínua com GitHub Actions;
-- organização de projeto para portfólio.
-
-Também demonstra uma preocupação importante: não apenas fazer funcionar, mas entender, testar, documentar e conseguir explicar as decisões técnicas.
-
----
-
-## Comandos Úteis
-
-### Rodar em desenvolvimento
-
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-### Rodar com Docker
-
-```bash
-docker compose up -d
-```
-
-### Ver logs da API
-
-```bash
-docker compose logs -f api
-```
-
-### Parar containers
-
-```bash
-docker compose down
-```
-
-### Rodar testes rápidos
-
-```bash
-./mvnw test
-```
-
-### Rodar validação completa
-
-```bash
-./mvnw verify
-```
-
-### Gerar build
+## Build do projeto
 
 ```bash
 ./mvnw clean package
 ```
 
-### Testar endpoint com curl e jq
+## Subir com Docker
+
+```bash
+docker compose up -d
+```
+
+## Ver logs da API
+
+```bash
+docker compose logs -f api
+```
+
+## Parar Docker
+
+```bash
+docker compose down
+```
+
+---
+
+# Exemplos rápidos com curl
+
+## Plantão atual
 
 ```bash
 curl -s "http://localhost:8081/api/plantoes/atual" | jq
 ```
 
+## Plantão atual por distrito
+
+```bash
+curl -s "http://localhost:8081/api/plantoes/atual?distrito=Primeiro%20Distrito" | jq
+```
+
+## Plantão por data
+
+```bash
+curl -s "http://localhost:8081/api/plantoes?data=2026-05-25" | jq
+```
+
+## Registrar conversa
+
+```bash
+curl -s -X POST "http://localhost:8081/api/conversas" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "telefoneUsuario": "5569999999999",
+    "mensagemUsuario": "Qual farmácia está de plantão hoje?",
+    "respostaEnviada": "Hoje a farmácia de plantão é FARMACIA REAL.",
+    "intencaoDetectada": "CONSULTAR_PLANTAO_ATUAL",
+    "distritoDetectado": "Primeiro Distrito",
+    "dataReferencia": "2026-05-24",
+    "origem": "WHATSAPP"
+  }' | jq
+```
+
+## Consultar histórico
+
+```bash
+curl -s "http://localhost:8081/api/conversas?telefone=5569999999999&limite=10" | jq
+```
+
 ---
 
-## Status Atual
+# Decisões técnicas importantes
 
-- [x] API REST funcional
-- [x] PostgreSQL configurado
-- [x] Flyway configurado
-- [x] Entidades JPA criadas
-- [x] DTOs padronizados
-- [x] Service Layer consolidada
-- [x] Tratamento global de erros
-- [x] Consulta de plantão atual
-- [x] Consulta de plantão por data
-- [x] Filtro por distrito
-- [x] Docker configurado
-- [x] Docker Compose configurado
-- [x] Profiles `dev`, `test`, `integration` e `prod`
-- [x] Swagger/OpenAPI configurado
-- [x] GitHub Actions configurado
-- [x] Testes unitários
-- [x] Testes JPA
-- [x] Testes WebMvc
-- [x] Testes de integração com Testcontainers
-- [x] Separação entre testes rápidos e testes de integração
-- [x] README atualizado
+## Por que usar DTOs?
+
+DTOs evitam que a API exponha diretamente as entidades JPA.
+
+Isso ajuda a manter:
+
+- segurança;
+- controle do contrato HTTP;
+- separação entre banco e API;
+- liberdade para mudar a estrutura interna sem quebrar clientes externos.
+
+## Por que usar Service Layer?
+
+A Service concentra regras de negócio e regras de aplicação.
+
+Isso evita Controllers com lógica demais e facilita testes unitários.
+
+## Por que usar Flyway?
+
+Flyway versiona o banco de dados.
+
+Isso evita que o schema dependa de alterações automáticas do Hibernate e permite rastrear a evolução estrutural do projeto.
+
+## Por que usar Testcontainers?
+
+Testcontainers permite rodar testes de integração com PostgreSQL real.
+
+Isso aumenta a confiança de que o comportamento validado em teste se aproxima do ambiente real.
+
+## Por que histórico de conversas é separado de plantão?
+
+Porque histórico é rastreabilidade.
+
+Plantão é regra de negócio principal.
+
+Misturar os dois domínios aumentaria acoplamento e deixaria o projeto mais difícil de evoluir.
 
 ---
 
-## Próximos Passos
+# Status atual do projeto
 
-### Curto prazo
+Fases concluídas:
 
-- ajustar a pipeline do GitHub Actions para considerar o ciclo `verify`;
-- revisar documentação conforme a evolução do projeto;
-- manter os exemplos de uso atualizados.
+| Fase | Descrição |
+|---:|---|
+| 1 | Base Spring Boot, PostgreSQL e Flyway |
+| 2 | Relacionamentos JPA |
+| 3 | Service Layer e regra temporal |
+| 4 | API REST e DTOs |
+| 5 | Tratamento global de erros |
+| 6 | Refatoração e robustez |
+| 7 | Dados reais |
+| 8 | Consulta por data |
+| 9 | Docker e Docker Compose |
+| 10 | Integração arquitetural com n8n |
+| 11 | README profissional |
+| 12 | OpenAPI/Swagger |
+| 13 | GitHub Actions CI |
+| 14 | Testes de integração profissionais |
+| 15 | Persistência de conversas e histórico |
 
-### Médio prazo
+---
 
-- integrar com n8n;
-- preparar contrato de integração para WhatsApp;
-- criar persistência de histórico de conversas;
-- melhorar logs da aplicação.
+# Próximos passos possíveis
 
-### Longo prazo
+Possíveis evoluções futuras:
 
-- deploy em cloud;
+- integração real com n8n registrando conversas na API;
+- integração oficial com WhatsApp Cloud API;
+- logs estruturados;
 - observabilidade;
-- monitoramento;
-- alertas;
-- integração oficial com WhatsApp Cloud API.
+- filtros de histórico por período;
+- paginação mais completa;
+- autenticação para endpoints administrativos;
+- deploy em cloud;
+- dashboard de atendimentos.
 
 ---
 
-## Autor
+# Objetivo profissional
+
+Este projeto também serve como portfólio técnico.
+
+Ele demonstra conhecimentos de:
+
+- Java;
+- Spring Boot;
+- REST APIs;
+- JPA;
+- PostgreSQL;
+- Flyway;
+- Docker;
+- Testes automatizados;
+- Testcontainers;
+- GitHub Actions;
+- documentação técnica;
+- arquitetura em camadas;
+- integração com ferramentas externas.
+
+---
+
+# Autor
 
 Desenvolvido por Thiago Borghardt.
 
-Projeto criado como laboratório de aprendizado backend com Java e Spring Boot, voltado para prática real, portfólio técnico e preparação para entrevistas.
-
+Projeto criado com foco em aprendizado prático de backend Java, construção de portfólio e preparação para entrevistas técnicas.
