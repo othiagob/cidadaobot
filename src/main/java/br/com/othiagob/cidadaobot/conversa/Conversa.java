@@ -15,7 +15,7 @@ public class Conversa {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
+  private Long id;
 
   @Column(name = "telefone_usuario", nullable = false, length = 20)
   private String telefoneUsuario;
@@ -38,7 +38,7 @@ public class Conversa {
   @Column(nullable = false, length = 50)
   private String origem;
 
-  @Column(name = "criada_em", nullable = false, updatable = false)
+  @Column(name = "criada_em", nullable = false, insertable = false, updatable = false)
   private LocalDateTime criadaEm;
 
   protected Conversa() {}
@@ -60,7 +60,7 @@ public class Conversa {
     this.origem = origem;
   }
 
-  public long getId() {
+  public Long getId() {
     return id;
   }
 
