@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "conversas")
@@ -38,7 +39,8 @@ public class Conversa {
   @Column(nullable = false, length = 50)
   private String origem;
 
-  @Column(name = "criada_em", nullable = false, insertable = false, updatable = false)
+  @CreationTimestamp
+  @Column(name = "criada_em", nullable = false, updatable = false)
   private LocalDateTime criadaEm;
 
   protected Conversa() {}
