@@ -7,10 +7,14 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PlantaoService {
+  private static final Logger logger = LoggerFactory.getLogger(PlantaoService.class);
 
   private static final LocalTime HORARIO_INICIO_PLANTAO = LocalTime.of(7, 0);
 
@@ -54,7 +58,17 @@ public class PlantaoService {
         dataPlantaoAtivo, distrito.trim());
   }
 
+  @Cacheable(
+      value = "plantoesPorData",
+      key =
+          "'data:' + #data + ':distrito:' + "
+              + "(T(org.springframework.util.StringUtils).hasText(#distrito) "
+              + "? #distrito.trim().toLowerCase() : 'todos')")
   public ConsultaPlantaoAtualRespostaDTO consultarPlantaoPorData(LocalDate data, String distrito) {
+    logger.debug(
+        "Cache miss: consultando plantão por data no PostgreSQL. data={}, distrito={}",
+        data,
+        distrito);
 
     if (data == null) {
       throw new IllegalArgumentException("A data da consulta não pode ser nula.");
@@ -71,6 +85,7 @@ public class PlantaoService {
     }
 
     List<PlantaoRespostaDTO> plantoes = escalas.stream().map(PlantaoRespostaDTO::from).toList();
+
     return new ConsultaPlantaoAtualRespostaDTO(
         data, true, "Plantão encontrado para a data informada.", plantoes);
   }

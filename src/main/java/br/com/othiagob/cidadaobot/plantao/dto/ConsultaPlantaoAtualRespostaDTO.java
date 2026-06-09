@@ -1,12 +1,11 @@
 package br.com.othiagob.cidadaobot.plantao.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
-@Schema(
-    name = "ConsultaPlantaoAtualResposta",
-    description = "Dados retornados pela consulta de farmácias de plantão.")
+@Schema(description = "Resposta da consulta de plantão.")
 public record ConsultaPlantaoAtualRespostaDTO(
     @Schema(
             description = "Data usada como referência para localizar a escala de plantão.",
@@ -21,4 +20,5 @@ public record ConsultaPlantaoAtualRespostaDTO(
             example = "Plantão ativo encontrado.")
         String mensagem,
     @Schema(description = "Lista de farmácias encontradas para o plantão consultado.")
-    List<PlantaoRespostaDTO> plantoes) {}
+        List<PlantaoRespostaDTO> plantoes)
+    implements Serializable {}
